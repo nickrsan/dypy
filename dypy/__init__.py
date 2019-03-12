@@ -16,7 +16,7 @@
 
 	```
 	import support  # user's extra code to support the objective function
-	import dp
+	import dypy as dp
 
 	objective_function = support.objective_function
 	height_var = dp.StateVariable("height")
@@ -41,10 +41,13 @@
 import numpy
 import logging
 
-from . import reducers
-from . import variables
+from .reducers import Reducer, ProbabilisticReducer, VariableReducer
+from .variables import StateVariable, DecisionVariable
 
 log = logging.getLogger("dypy")
+
+__author__ = "nickrsan"
+__version__ = "0.0.1b"
 
 
 MAXIMIZE = max
