@@ -54,6 +54,18 @@ MAXIMIZE = max
 MINIMIZE = min
 
 
+def default_objective(*args, **kwargs):
+	"""
+		A bare objective function that makes all cells 0 - provided as a default so we can build stages where someone
+		might do a manual override, but the DP should check to make sure the objective isn't the default with all cells
+		at 0 before solving.
+	:param args:
+	:param kwargs:
+	:return:
+	"""
+	return 0
+
+
 class DynamicProgram(object):
 	"""
 		This object actually runs the DP - doesn't currently support multiple decision variables or probabilities.
@@ -61,12 +73,11 @@ class DynamicProgram(object):
 		Currently designed to only handle backward DPs
 	"""
 
-	def __init__(self, objective_function, timestep_size, time_horizon, discount_rate, state_variables=None, selection_constraints=None, decision_variables=None):
+	def __init__(self, objective_function=default_objective, timestep_size=None, time_horizon=None, discount_rate=0, state_variables=None, selection_constraints=None, decision_variable=None, calculation_function=None):
 		"""
 
-		:param objective_function: What function are we using to evaluate? Basically, is this a maximization (benefit)
-		 or minimization (costs) setup. Provide the function object for max or min. Provide the actual `min` or `max functions
-		 (don't run it, just the name) or if convenient, use the shortcuts dp.MINIMIZE or dp.MAXIMIZE
+		:param objective_function: What function provides values to populate each cell in each stage? Not required if
+									you build your own stages with their own values
 
 		:param selection_constraints: Is there a minimum value that must be achieved in the selection?
 				If so, this should be a list with the required quantity at each time step
@@ -76,6 +87,10 @@ class DynamicProgram(object):
 		:param discount_rate: give the discount rate in "annual" units. Though timesteps don't need to be in years, think
 			of the discount rate as applying per smallest possible timestep size, so if your timestep_size is 40, then
 			your discount rate will be transformed to cover 40 timesteps (compounding).
+
+		:param calculation_function: What function are we using to evaluate? Basically, is this a maximization (benefit)
+		 or minimization (costs) setup. Provide the function object for max or min. Provide the actual `min` or `max functions
+		 (don't run it, just the name) or if convenient, use the shortcuts dp.MINIMIZE or dp.MAXIMIZE
 		"""
 		self.stages = []
 		self.timestep_size = timestep_size
@@ -89,22 +104,23 @@ class DynamicProgram(object):
 			self._index_state_variables()
 
 		# set up decision variables passed in
-		if not decision_variables:
+		if not decision_variable:
 			self.decision_variable = None
 		else:
 			self.decision_variable = decision_variable
 
 		# Calculation Function
 		self.objective_function = objective_function
+		self.calculation_function = calculation_function
 
-		if self.objective_function not in (max, min, MAXIMIZE, MINIMIZE):
+		if self.calculation_function not in (max, min, MAXIMIZE, MINIMIZE):
 			raise ValueError("Calculation function must be either 'max' or 'min' or one of the aliases in this package of dp.MAXIMIZE or dp.MINIMIZE")
 
 		# make values that we use as bounds in our calculations - when maximizing, use a negative number, and when minimizing, get close to infinity
 		# we use this for any routes through the DP that get excluded
-		if self.objective_function is max:
+		if self.calculation_function is max:
 			self.exclusion_value = -1  # just need it to be less
-		elif self.objective_function is min:
+		elif self.calculation_function is min:
 			self.exclusion_value = 9223372036854775808  # max value for a signed 64 bit int - this should force it to not be selected in minimization
 
 	def add_state_variable(self, variable):
@@ -155,7 +171,25 @@ class DynamicProgram(object):
 		for stage_id in range(0, self.time_horizon+1, self.timestep_size):
 			self.add_stage(name="{} {}".format(name_prefix, stage_id))
 
+	def _is_default(self):
+		"""
+			Checks if we are using the default objective function *and* haven't modified any stage values. We don't want
+			to solve the DP in this case, but instead raise an error to tell the user they're not using the solver
+			appropriately
+		:return:
+		"""
+		log.debug("checking that stages are not in default state")
+		for stage in self.stages:
+			if numpy.sum(stage.matrix) != 0:
+				return False  # not in default state - have other values
+
+		return True  # if we make it out here, we're in the default state
+
 	def run(self):
+
+		if self._is_default():
+			raise ValueError("Objective function must be provided before running DP. Either provide it as an argument"
+							 "at creation, or set the .objective_function parameter to a function object (*not* a function result)")
 
 		if not self.decision_variable or len(self.state_variables) == 0:
 			raise ValueError("Decision Variable and State Variables must be attached to DynamicProgram before running. Use .add_state_variable to attach additional state variables, or set .decision_variable to a DecisionVariable object first")
