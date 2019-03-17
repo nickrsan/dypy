@@ -38,11 +38,14 @@
 	```
 """
 
-import numpy
 import logging
+import itertools
+
+import numpy
 
 from .reducers import Reducer, ProbabilisticReducer, VariableReducer
 from .variables import StateVariable, DecisionVariable
+from . import support
 
 log = logging.getLogger("dypy")
 
@@ -100,8 +103,9 @@ class DynamicProgram(object):
 		if not state_variables:
 			self.state_variables = []
 		else:
-			self.state_variables = list(state_variables)  # coerce to list in case they gave us something immutable like a tuple
-			self._index_state_variables()
+			for variable in state_variables:
+				self.add_state_variable(variable, setup_state=False)
+			self._setup_state_variables()  # set up the state variables for the DP once all are added
 
 		# set up decision variables passed in
 		if not decision_variable:
@@ -123,17 +127,31 @@ class DynamicProgram(object):
 		elif self.calculation_function is min:
 			self.exclusion_value = 9223372036854775808  # max value for a signed 64 bit int - this should force it to not be selected in minimization
 
-	def add_state_variable(self, variable):
+	def add_state_variable(self, variable, setup_state=True):
 		"""
 
 		:param variable: A StateVariable object - afterward, will be available in .state_variables
+		:param setup_state: If True, runs _setup_state_variables after finishing. Default is True,
+							but when adding a bunch of state variables, it's faster just to manually
+							run it once at the end. It runs it by default so that for simple DPs, you
+							don't need to think about it, but advanced, larger DPs, may wnat to set it
+							to False and run _setup_state_variables once all are added
 		:return:
 		"""
 		if not isinstance(variable, StateVariable):
 			raise ValueError("Provided variable must be a StateVariable object. Can't add variable of type {} to DP".format(type(variable)))
 
 		self.state_variables.append(variable)
+		if setup_state:
+			self._setup_state_variables()
+
+	def _setup_state_variables(self):
+		"""
+			After adding state variables, performs setup operations for the DP
+		:return:
+		"""
 		self._index_state_variables()  # make sure to reindex the variables when we add one
+		self._all_states = itertools.product(*[var.discretized for var in self.state_variables])
 
 	def _index_state_variables(self):
 		for index, variable in enumerate(self.state_variables):
@@ -143,7 +161,7 @@ class DynamicProgram(object):
 			variable.column_index = index  # tell the variable what column it is
 
 	def add_stage(self, name):
-		stage = Stage(name=name)
+		stage = Stage(name=name, parent_dp=self)
 
 		self.stages.append(stage)
 		self._index_stages()
@@ -202,17 +220,10 @@ class DynamicProgram(object):
 
 		for stage in range(rows):
 			for index, row in enumerate(matrix):
-				matrix[index][stage] = present_value(index, year=stage*self.timestep_size, discount_rate=self.discount_rate )
+				matrix[index][stage] = support.present_value(self.objective_function(), index, year=stage*self.timestep_size, discount_rate=self.discount_rate )
 
 		# This next section is old code from a prior simple DP - it will be removed, but was how the set of stages was
 		# built previously so I can see what the usage was like while building this for multiple objectives
-		stages = []
-		for year in range(rows):
-			cost_list = matrix_array[1:, year]  # pull the column out of the matrix corresponding to this year - remove the 0 value first row (should look into how this is getting there)
-			year_stage = Stage(name="Year {}".format(year), cost_benefit_list=list(cost_list), calculation_function=min, selection_constraints=required)
-			year_stage.max_selections = needed_trucks
-			year_stage.number = year
-			stages.append(year_stage)
 
 		# initiate the optimization and retrieval of the best values
 		self.stages[-1].optimize()
@@ -220,18 +231,18 @@ class DynamicProgram(object):
 
 
 class Stage(object):
-	def __init__(self, name, cost_benefit_list, parent_dp, max_selections=7, previous=None, next_stage=None):
+	def __init__(self, name, decision_variable, parent_dp, max_selections=7, previous=None, next_stage=None):
 		"""
 
 		:param name:
-		:param cost_benefit_list: an iterable containing benefit or cost values at each choice step
+		:param decision_variable: an iterable containing benefit or cost values at each choice step
 		:param max_selections: How many total items are we selecting?
 		:param previous: The previous stage, if one exists
 		:param next_stage: The next stage, if one exists
 		"""
 		self.name = name
 		self.parent_dp = parent_dp
-		self.cost_benefit_list = cost_benefit_list
+		self.decision_variable = decision_variable
 		self.max_selections = max_selections
 		self.next = next_stage
 		self.previous = previous
@@ -241,6 +252,8 @@ class Stage(object):
 		self.pass_data = []
 		self.choices_index = []
 
+	def build(self):
+
 	def optimize(self, prior=None):
 
 		if self.parent_dp.selection_constraints and self.number is None:
@@ -248,7 +261,7 @@ class Stage(object):
 
 		# first, we need to get the data from the prior stage - if nothing was passed in, we're on the first step and can skip some things
 		if prior is None:
-			self.pass_data = self.cost_benefit_list
+			self.pass_data = self.decision_variable.options
 			if self.parent_dp.selection_constraints:  # then we have selections constraints
 				for row_index, row_value in enumerate(self.pass_data):
 					if row_index >= len(self.pass_data) - self.parent_dp.selection_constraints[self.number]:
@@ -256,7 +269,8 @@ class Stage(object):
 		else:
 			# we're on a stage after the first stage
 			# make an empty matrix
-			self.matrix = [[0 for i in range(len(self.cost_benefit_list) + 1)] for i in range(self.max_selections)] # adding 1 because we need a 0th column
+			# TODO: Modify this to use the state variables
+			self.matrix = numpy.zeros((len(self.decision_variable.options) + 1, self.max_selections)) # adding 1 because need a zeroth column
 
 			# add the priors to the first column
 			for index, value in enumerate(prior):
