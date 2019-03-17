@@ -1,4 +1,6 @@
+from itertools import chain
 
+import sys
 
 def present_value(value, year, discount_rate, compounding_rate=1):
 	"""
@@ -10,3 +12,20 @@ def present_value(value, year, discount_rate, compounding_rate=1):
 	:return:  present value of the provided value
 	"""
 	return value * (1 + float(discount_rate)/float(compounding_rate)) ** (-year*compounding_rate)
+
+
+
+def _dict_merge_lt_35(dictionary1, dictionary2):
+	"""
+		See https://treyhunner.com/2016/02/how-to-merge-dictionaries-in-python/
+	:return:
+	"""
+	return dict(chain(dictionary1.items(), dictionary2.items()))
+
+
+## Determine the best way to merge dicts - we do it this way for speed because this will be called for every cell in every stage  - the new method is significantly faster than the old
+if sys.version_info.major == 3 and sys.version_info.minor >= 5:
+	import support_new_syntax  # this is here because the code in this file is only readable by Python 3.5 and up
+	merge_dicts = support_new_syntax._dict_merge_gte_35
+else:
+	merge_dicts = _dict_merge_lt_35

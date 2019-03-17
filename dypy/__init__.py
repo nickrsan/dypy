@@ -50,11 +50,13 @@ from . import support
 log = logging.getLogger("dypy")
 
 __author__ = "nickrsan"
-__version__ = "0.0.1b"
+__version__ = "0.0.2b"
 
 
 MAXIMIZE = max
 MINIMIZE = min
+
+
 
 
 def default_objective(*args, **kwargs):
@@ -100,6 +102,8 @@ class DynamicProgram(object):
 		self.time_horizon = time_horizon
 		self.discount_rate = discount_rate
 
+		self._all_states = None
+		self._state_keys = None
 		if not state_variables:
 			self.state_variables = []
 		else:
@@ -151,7 +155,8 @@ class DynamicProgram(object):
 		:return:
 		"""
 		self._index_state_variables()  # make sure to reindex the variables when we add one
-		self._all_states = itertools.product(*[var.values for var in self.state_variables])
+		self._all_states = list(itertools.product(*[var.values for var in self.state_variables]))
+		self._state_keys = [var.variable_id for var in self.state_variables]  # will be in same order as provided to all_states
 
 	def _index_state_variables(self):
 		for index, variable in enumerate(self.state_variables):
@@ -186,7 +191,7 @@ class DynamicProgram(object):
 		:param name_prefix: The string that will go before the stage number when printing information
 		:return:
 		"""
-		for stage_id in range(0, self.time_horizon+1, self.timestep_size):
+		for stage_id in range(1, self.time_horizon+1, self.timestep_size):
 			self.add_stage(name="{} {}".format(name_prefix, stage_id))
 
 	def _is_default(self):
@@ -218,10 +223,13 @@ class DynamicProgram(object):
 		rows = int(self.time_horizon/self.timestep_size)  # this is the wrong way to do this - the matrix should
 		matrix = numpy.zeros((rows, ))
 
-		# TODO: This needs to be updated for the more modern form
-		for stage in range(rows):
-			for index, row in enumerate(matrix):
-				matrix[index][stage] = support.present_value(self.objective_function(), index, year=stage*self.timestep_size, discount_rate=self.discount_rate )
+		for stage in self.stages:
+			stage.build()
+
+		# TODO: This needs to be updated for the more modern form - this probable is controlled by the stage instead
+		#for stage in range(rows):
+		#	for index, row in enumerate(matrix):
+		#		matrix[index][stage] = support.present_value(self.objective_function(), index, year=stage*self.timestep_size, discount_rate=self.discount_rate )
 
 		# This next section is old code from a prior simple DP - it will be removed, but was how the set of stages was
 		# built previously so I can see what the usage was like while building this for multiple objectives
@@ -254,33 +262,66 @@ class Stage(object):
 		self.choices_index = []
 
 	def build(self):
-		pass
+		"""
+			Builds the stage table - evaluates the objective function for each location, passing the various
+			values to it so it can provide a result. Does *not* handle prior data though - that is handled when
+			we actually run the DP. We separate this out so that people who want to intervene between generating
+			the stage table and handling the prior can do so.
+		:return:
+		"""
+
+		states = self.parent_dp._all_states
+		state_kwargs = self.parent_dp._state_keys
+		decisions = self.decision_variable.options
+		self.matrix = numpy.zeros((len(states), len(decisions)))
+
+		for row_id, state_values in enumerate(states):
+			for column_id, decision_value in enumerate(decisions):
+				log.debug("{}, {}".format(row_id, column_id))
+				state_data = dict(zip(state_kwargs, state_values))
+				decision_data = {self.decision_variable.variable_id: decision_value}
+				self.matrix[row_id][column_id] = self.parent_dp.objective_function(stage=self,
+																					**support.merge_dicts(state_data,
+																										  decision_data))
 
 	def optimize(self, prior=None):
+		"""
+			This handles the actual backward DP calculation - assumes that the stage has a matrix that is built
+			already with appropriate values.
+
+			This method will handle migrating prior data back through. As notes:
+				* We should be able to do a lot of this with numpy broadcasting. If we take the calculation function
+						of each row in the previous stage, then broadcast it across this stage, that should do it.
+				* Need to think about where reducers fit in - if we have a probabilistic reducer, that can run after
+						we do the broadcasting, I believe.
+				* Need to figure out how we want to handle both selection constraints, but also decision/state interactions
+						Right now, we can say which state a decision feeds back on - but what's going through my head about that
+						is: 1) Do we need that if we expect an objective function? I think we do because that determines
+							how we take values from the future and propogate them backward. This is where maybe we
+							might not actually be able to use numpy broadcasting? Or maybe we have to shift the array
+							we're broadcasting to align based on the best decision - not sure - need to think of how
+							we're going to handle that a bit more
+							2) What about where there's some limit imposed by decision var / state var interaction. For
+								example, with the course studying test problem - in the last stage, the state variable
+								can't be less than the decision variable. Maybe that's always the case though, and is
+								only a last stage problem?
+		:param prior:
+		:return:
+		"""
 
 		if self.parent_dp.selection_constraints and self.number is None:
 			raise ValueError("Stage number(.number) must be identified in sequence in order to use selection constraints")
 
 		# first, we need to get the data from the prior stage - if nothing was passed in, we're on the first step and can skip some things
 		if prior is None:
+			# TODO: This won't apply to more advanced scenarios - this should go in the "build" phase - where we'll get the values
+			# TODO: for each cell - then we can deal with passing and applying the backward values here.
 			self.pass_data = self.decision_variable.options
 			if self.parent_dp.selection_constraints:  # then we have selections constraints
 				for row_index, row_value in enumerate(self.pass_data):
 					if row_index >= len(self.pass_data) - self.parent_dp.selection_constraints[self.number]:
 						self.pass_data[row_index] = self.parent_dp.exclusion_value
 		else:
-			# we're on a stage after the first stage
-			# make an empty matrix
-			# TODO: Modify this to use the state variables
-			self.matrix = numpy.zeros((len(self.decision_variable.options) + 1, self.max_selections)) # adding 1 because need a zeroth column
-
-			# add the priors to the first column
-			for index, value in enumerate(prior):
-				self.matrix[index][0] = value  # set the values in the first column
-
-			# add the benefit values - these go on the -1:1 line basically
-			for index, value in enumerate(self.decision_variable.options):
-				self.matrix[index][index+1] = value
 
 			# set up maximum selection constraints based on what will have been required previously
 			if self.parent_dp.selection_constraints:  # then we have selections constraints
