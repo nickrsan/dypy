@@ -151,7 +151,7 @@ class DynamicProgram(object):
 		:return:
 		"""
 		self._index_state_variables()  # make sure to reindex the variables when we add one
-		self._all_states = itertools.product(*[var.discretized for var in self.state_variables])
+		self._all_states = itertools.product(*[var.values for var in self.state_variables])
 
 	def _index_state_variables(self):
 		for index, variable in enumerate(self.state_variables):
@@ -161,7 +161,7 @@ class DynamicProgram(object):
 			variable.column_index = index  # tell the variable what column it is
 
 	def add_stage(self, name):
-		stage = Stage(name=name, parent_dp=self)
+		stage = Stage(name=name, decision_variable=self.decision_variable, parent_dp=self)
 
 		self.stages.append(stage)
 		self._index_stages()
@@ -218,6 +218,7 @@ class DynamicProgram(object):
 		rows = int(self.time_horizon/self.timestep_size)  # this is the wrong way to do this - the matrix should
 		matrix = numpy.zeros((rows, ))
 
+		# TODO: This needs to be updated for the more modern form
 		for stage in range(rows):
 			for index, row in enumerate(matrix):
 				matrix[index][stage] = support.present_value(self.objective_function(), index, year=stage*self.timestep_size, discount_rate=self.discount_rate )
@@ -253,6 +254,7 @@ class Stage(object):
 		self.choices_index = []
 
 	def build(self):
+		pass
 
 	def optimize(self, prior=None):
 
@@ -277,7 +279,7 @@ class Stage(object):
 				self.matrix[index][0] = value  # set the values in the first column
 
 			# add the benefit values - these go on the -1:1 line basically
-			for index, value in enumerate(self.cost_benefit_list):
+			for index, value in enumerate(self.decision_variable.options):
 				self.matrix[index][index+1] = value
 
 			# set up maximum selection constraints based on what will have been required previously

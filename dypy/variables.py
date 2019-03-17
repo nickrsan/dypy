@@ -1,4 +1,9 @@
+import re
+
 import numpy
+
+VARIABLE_ID_VALIDATION_PATTERN = re.compile('[^a-zA-Z0-9_]|_')
+VARIABLE_NUMERAL_BEGINNING_PATTERN = re.compile('^[0-9]')
 
 class StateVariable(object):
 	"""
@@ -19,21 +24,39 @@ class StateVariable(object):
 		or maximize. We need this to reduce multiple state variables to a single state variable.
 	"""
 
-	def __init__(self, name, values):
+	def __init__(self, name, values, variable_id=None):
+		"""
+
+		:param name:
+		:param values:
+		:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.
+				If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
+				and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
+				by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
+				intact
+		"""
 		self.name = name
 		self.values = values
 
 		self.column_index = None  # this will be set by the calling DP - it indicates what column in the table has this information
 
+		self.variable_id = check_variable_id(name=name, variable_id=variable_id)
+
 
 class DecisionVariable(object):
-	def __init__(self, name, related_state=None, minimum=None, maximum=None, step_size=None, options=None):
+	def __init__(self, name, variable_id=None, related_state=None, minimum=None, maximum=None, step_size=None, options=None):
 		"""
 			We'll use this to manage the decision variable - we'll need columns for each potential value here
 		:param name:
-		:param state: the StateVariable object that this DecisionVariable directly feeds back on
+		:param related_state: the StateVariable object that this DecisionVariable directly feeds back on
+		:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.
+				If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
+				and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
+				by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
+				intact
 		"""
 		self.name = name
+		self.variable_id = check_variable_id(name=name, variable_id=variable_id)
 		self.related_state = related_state
 
 		self._min = minimum
@@ -111,3 +134,14 @@ class DecisionVariable(object):
 		"""
 		pass
 
+
+def check_variable_id(name, variable_id):
+	if variable_id is None:
+		variable_id = name.lower()
+
+	# replace non-alphanumeric values with _
+	variable_id = re.sub(VARIABLE_ID_VALIDATION_PATTERN, '_', variable_id)
+	# strip numbers off the beginning
+	variable_id = re.sub(VARIABLE_NUMERAL_BEGINNING_PATTERN, '', variable_id)
+
+	return variable_id
