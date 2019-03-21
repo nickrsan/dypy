@@ -78,7 +78,7 @@ class DynamicProgram(object):
 		Currently designed to only handle backward DPs
 	"""
 
-	def __init__(self, objective_function=default_objective, timestep_size=None, time_horizon=None, discount_rate=0, state_variables=None, selection_constraints=None, decision_variable=None, calculation_function=None, prior=None):
+	def __init__(self, objective_function=default_objective, timestep_size=None, time_horizon=None, discount_rate=0, state_variables=None, max_selections=None, selection_constraints=None, decision_variable=None, calculation_function=None, prior=None):
 		"""
 
 		:param objective_function: What function provides values to populate each cell in each stage? Not required if
@@ -97,6 +97,9 @@ class DynamicProgram(object):
 		 or minimization (costs) setup. Provide the function object for max or min. Provide the actual `min` or `max functions
 		 (don't run it, just the name) or if convenient, use the shortcuts dp.MINIMIZE or dp.MAXIMIZE
 
+		:param max_selections: Up to what value of the state variable can we use to make our decision? If not provided,
+			all values of the state variable will be allowed
+
 		:param prior: Which class should be used to handle priors (best values from future stages) - SimplePrior is best in many
 			cases, but may not apply everywhere and will be slow for large tables. Just provide the class object, not an instance.
 		"""
@@ -104,6 +107,7 @@ class DynamicProgram(object):
 		self.timestep_size = timestep_size
 		self.time_horizon = time_horizon
 		self.discount_rate = discount_rate
+		self.max_selections = max_selections
 
 		self._all_states = None
 		self._state_keys = None
@@ -252,7 +256,7 @@ class DynamicProgram(object):
 
 
 class Stage(object):
-	def __init__(self, name, decision_variable, parent_dp, max_selections=7, previous=None, next_stage=None, prior_handler=None):
+	def __init__(self, name, decision_variable, parent_dp, previous=None, next_stage=None, prior_handler=None):
 		"""
 
 		:param name:
@@ -264,7 +268,6 @@ class Stage(object):
 		self.name = name
 		self.parent_dp = parent_dp
 		self.decision_variable = decision_variable
-		self.max_selections = max_selections
 		self.prior_handler_class = prior_handler
 		self.prior_handler = None
 		self.create_prior_handler()
@@ -390,14 +393,14 @@ class Stage(object):
 		:return:
 		"""
 
-		amount_remaining = self.max_selections - prior
+		amount_remaining = self.parent_dp.max_selections - prior
 		if amount_remaining > 0:
 			available_options = self.pass_data[:amount_remaining]  # strip off the end of it to remove values that we can't use
 			best_option = available_options[-1]  # get the last value
 			row_of_best = numpy.where(available_options == best_option)  # now we need the actual row to use in the matrix
 
 			if self.matrix.any():
-				column_of_best = numpy.where(self.matrix[row_of_best[0]] == best_option)[-1]  # get the column of the best option - also the number of days
+				column_of_best = numpy.where(self.matrix[row_of_best[0]] == best_option)[-1].flatten()[0]  # get the column of the best option - also the number of days
 			else:  # this triggers for the last item, which doesn't have a matrix, but just a costs list
 				column_of_best = row_of_best + 1
 		else:
