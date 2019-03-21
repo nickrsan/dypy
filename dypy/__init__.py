@@ -53,8 +53,8 @@ __author__ = "nickrsan"
 __version__ = "0.0.2b"
 
 
-MAXIMIZE = max
-MINIMIZE = min
+MAXIMIZE = numpy.max
+MINIMIZE = numpy.min
 
 
 
@@ -121,8 +121,13 @@ class DynamicProgram(object):
 		self.objective_function = objective_function
 		self.calculation_function = calculation_function
 
-		if self.calculation_function not in (max, min, MAXIMIZE, MINIMIZE):
-			raise ValueError("Calculation function must be either 'max' or 'min' or one of the aliases in this package of dp.MAXIMIZE or dp.MINIMIZE")
+		if self.calculation_function not in (numpy.max, numpy.min, MAXIMIZE, MINIMIZE):
+			raise ValueError("Calculation function must be either 'numpy.max', 'numpy.min' or one of the aliases in this package of dp.MAXIMIZE or dp.MINIMIZE")
+
+		if self.calculation_function is numpy.min:
+			self.index_calculation_function = numpy.argmin
+		else:  # we can do else because only options are numpy.min and numpy.max, with ValueError raised above if it's not one of those
+			self.index_calculation_function = numpy.argmax
 
 		# make values that we use as bounds in our calculations - when maximizing, use a negative number, and when minimizing, get close to infinity
 		# we use this for any routes through the DP that get excluded
@@ -175,14 +180,15 @@ class DynamicProgram(object):
 
 		# assigning .number allows us to have constraints on the number of items selected at each stage
 		if len(self.stages) > 1:  # if there are at least two, then set the next and previous objects on the first and last
-			self.stages[0].next = self.stages[1]
+			self.stages[0].next_stage = self.stages[1]
 			self.stages[0].number = 0
-			self.stages[-1].previous = self.stages[-2]
+			self.stages[-1].previous_stage = self.stages[-2]
 			self.stages[-1].number = len(self.stages) - 1
 
 		for i, stage in enumerate(self.stages[1:-1]):  # for all stages except the first and last, then we set both next and previous
-			self.stages[i].next = self.stages[i+1]
-			self.stages[i].previous = self.stages[i-1]
+			i+=1  # need to add 1 or it won't work because we're slicing off the first item
+			self.stages[i].next_stage = self.stages[i+1]
+			self.stages[i].previous_stage = self.stages[i-1]
 			self.stages[i].number = i
 
 	def build_stages(self, name_prefix="Step"):
@@ -253,8 +259,8 @@ class Stage(object):
 		self.parent_dp = parent_dp
 		self.decision_variable = decision_variable
 		self.max_selections = max_selections
-		self.next = next_stage
-		self.previous = previous
+		self.next_stage = next_stage
+		self.previous_stage = previous
 		self.matrix = None  # this will be created from the parameters when .optimize is run
 		self.number = None
 
@@ -309,47 +315,49 @@ class Stage(object):
 		:return:
 		"""
 
-		if self.parent_dp.selection_constraints and self.number is None:
-			raise ValueError("Stage number(.number) must be identified in sequence in order to use selection constraints")
+		#if self.parent_dp.selection_constraints and self.number is None:
+		#	raise ValueError("Stage number(.number) must be identified in sequence in order to use selection constraints")
 
 		# first, we need to get the data from the prior stage - if nothing was passed in, we're on the first step and can skip some things
-		if prior is None:
-			# TODO: This won't apply to more advanced scenarios - this should go in the "build" phase - where we'll get the values
-			# TODO: for each cell - then we can deal with passing and applying the backward values here.
-			self.pass_data = self.decision_variable.options
-			if self.parent_dp.selection_constraints:  # then we have selections constraints
-				for row_index, row_value in enumerate(self.pass_data):
-					if row_index >= len(self.pass_data) - self.parent_dp.selection_constraints[self.number]:
-						self.pass_data[row_index] = self.parent_dp.exclusion_value
-		else:
+		#if prior is None:
+		#	# TODO: This won't apply to more advanced scenarios - this should go in the "build" phase - where we'll get the values
+		#	# TODO: for each cell - then we can deal with passing and applying the backward values here.
+		#	self.pass_data = self.decision_variable.options  # TODO: This isn't correct - also, don't need a separate procedure here - just calculate the best values and send them back
+		#	if self.parent_dp.selection_constraints:  # then we have selections constraints
+		#		for row_index, row_value in enumerate(self.pass_data):
+		#			if row_index >= len(self.pass_data) - self.parent_dp.selection_constraints[self.number]:
+		#				self.pass_data[row_index] = self.parent_dp.exclusion_value
+		#else:
 
-			# set up maximum selection constraints based on what will have been required previously
-			if self.parent_dp.selection_constraints:  # then we have selections constraints
-				for row_index, row_value in enumerate(self.matrix):
-						if row_index >= len(self.matrix) - self.parent_dp.selection_constraints[self.number]:  # if the row is less than the constrained amount for this stage
-							for column_index, column_value in enumerate(self.matrix[row_index]):
-								self.matrix[row_index][column_index] = self.parent_dp.exclusion_value
+		#	# set up maximum selection constraints based on what will have been required previously
+		#	if self.parent_dp.selection_constraints:  # then we have selections constraints
+		#		for row_index, row_value in enumerate(self.matrix):
+		#				if row_index >= len(self.matrix) - self.parent_dp.selection_constraints[self.number]:  # if the row is less than the constrained amount for this stage
+		#					for column_index, column_value in enumerate(self.matrix[row_index]):
+		#						self.matrix[row_index][column_index] = self.parent_dp.exclusion_value
+		#
+		#	# now calculate the remaining values
 
-			# now calculate the remaining values
-			for row_index, row_value in enumerate(self.matrix):
-				for column_index, column_value in enumerate(self.matrix[row_index]):
-					if column_value == 0 and row_index - column_index >= 0:  # we only need to calculate fields that meet this condition - the way it's calculated, others will cause an IndexError anyway
-						stage_value = self.matrix[column_index-1][column_index]  # the value for this stage is on 1:1 line, so, it is where the indices are equal
-						prior_value = self.matrix[row_index-column_index][0]
-						if stage_value != 0 and prior_value != 0:  # if both are defined and not None
-							self.matrix[row_index][column_index] = stage_value + prior_value
+		# THIS LINE UNTIL LINE ABOVE if self.previous would be indented in the else block above
+		for row_index, row_value in enumerate(self.matrix):
+			for column_index, column_value in enumerate(self.matrix[row_index]):
+				if column_value == 0 and row_index - column_index >= 0:  # we only need to calculate fields that meet this condition - the way it's calculated, others will cause an IndexError anyway
+					stage_value = self.matrix[column_index-1][column_index]  # the value for this stage is on 1:1 line, so, it is where the indices are equal
+					prior_value = self.matrix[row_index-column_index][0]
+					if stage_value != 0 and prior_value != 0:  # if both are defined and not None
+						self.matrix[row_index][column_index] = stage_value + prior_value
 
 			# now remove the Nones so we can call min/max in Python 3
-			for row_index, row_value in enumerate(self.matrix):
-				for column_index, column_value in enumerate(self.matrix[row_index]):
-					if column_value == 0:
-						self.matrix[row_index][column_index] = self.parent_dp.exclusion_value  # setting to exclusion value makes it unselected still
+		for row_index, row_value in enumerate(self.matrix):
+			for column_index, column_value in enumerate(self.matrix[row_index]):
+				if column_value == 0:
+					self.matrix[row_index][column_index] = self.parent_dp.exclusion_value  # setting to exclusion value makes it unselected still
 
-			self.pass_data = [self.parent_dp.calculation_function(row) for row in self.matrix]  # sum the rows and find the max
-			self.choices_index = [row.index(self.parent_dp.calculation_function(row)) for row in self.matrix]  # get the column of the min/max value
+		self.pass_data = self.parent_dp.calculation_function(self.matrix, axis=0)  # sum the rows and find the max
+		self.choices_index = self.parent_dp.index_calculation_function(self.matrix, axis=0)  # get the column of the min/max value
 
-		if self.previous:
-			self.previous.optimize(self.pass_data)  # now run the prior stage
+		if self.previous_stage:
+			self.previous_stage.optimize(self.pass_data)  # now run the prior stage
 
 	def get_optimal_values(self, prior=0):
 		"""
@@ -378,7 +386,7 @@ class Stage(object):
 		number_of_items = column_of_best
 		print("{} - Number of items: {}, Total Cost/Benefit: {}".format(self.name, number_of_items, best_option))
 
-		if self.next:
-			self.next.get_optimal_values(prior=number_of_items+prior)
+		if self.next_stage:
+			self.next_stage.get_optimal_values(prior=number_of_items + prior)
 
 
