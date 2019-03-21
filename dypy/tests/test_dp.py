@@ -135,7 +135,7 @@ class SimpleDPTestFunction(unittest.TestCase):
 		# define the dynamic program and tell it we have four timesteps
 		dynamic_program = dypy.DynamicProgram(timestep_size=1, time_horizon=5,
 											  objective_function=objective_function, calculation_function=dypy.MAXIMIZE,
-											  prior=dypy.SimplePrior, max_selections=12)
+											  prior=dypy.SimplePrior)
 		dynamic_program.exclusion_value = -1  # set it to -1 since we know nothing else will be negative here - lets us visualize arrays better
 		dynamic_program.decision_variable = decision_variable
 		dynamic_program.add_state_variable(state_variable)

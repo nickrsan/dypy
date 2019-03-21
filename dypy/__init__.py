@@ -394,7 +394,12 @@ class Stage(object):
 		:return:
 		"""
 
-		amount_remaining = self.parent_dp.max_selections - prior
+		if self.parent_dp.max_selections:  # this format probably only works for 1 state variable and will need to be re-engineered
+			max_selections = self.parent_dp.max_selections
+		else:
+			max_selections = len(self.parent_dp._all_states)
+
+		amount_remaining = max_selections - prior
 		if amount_remaining > 0:
 			available_options = self.pass_data[:amount_remaining]  # strip off the end of it to remove values that we can't use
 			best_option = available_options[-1]  # get the last value
