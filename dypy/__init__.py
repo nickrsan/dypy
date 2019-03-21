@@ -283,8 +283,7 @@ class Stage(object):
 
 		for row_id, state_values in enumerate(states):
 			for column_id, decision_value in enumerate(decisions):
-				log.debug("{}, {}".format(row_id, column_id))
-				state_data = dict(zip(state_kwargs, state_values))
+				state_data = dict(zip(state_kwargs, state_values))  # build the kwarg pairs into a dictionary we can pass into the objective function
 				decision_data = {self.decision_variable.variable_id: decision_value}
 				self.matrix[row_id][column_id] = self.parent_dp.objective_function(stage=self,
 																					**support.merge_dicts(state_data,
@@ -352,6 +351,11 @@ class Stage(object):
 			for column_index, column_value in enumerate(self.matrix[row_index]):
 				if column_value == 0:
 					self.matrix[row_index][column_index] = self.parent_dp.exclusion_value  # setting to exclusion value makes it unselected still
+
+		# Add in previous stage
+		if prior is not None:
+			prior_shaped = prior.reshape(1, prior.size)
+			self.matrix += prior_shaped  # apply the prior down each column - probably need to make this only do it for the non index columns
 
 		self.pass_data = self.parent_dp.calculation_function(self.matrix, axis=0)  # sum the rows and find the max
 		self.choices_index = self.parent_dp.index_calculation_function(self.matrix, axis=0)  # get the column of the min/max value
