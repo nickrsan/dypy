@@ -65,7 +65,8 @@ Using DyPy, we'll set up each category of work as a stage since we'll do them se
 and then build an objective function that provides the number of bugs closed for a given
 number of days of effort.
 
-.. codeblock:: python
+.. code-block:: python
+
     # we have 12 days available to us for studying
     state_variable = dypy.StateVariable("Days Spent On Category", values=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     # but we can only spend between 1 and 4 days studying for any single course

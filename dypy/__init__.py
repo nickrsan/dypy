@@ -50,13 +50,11 @@ from . import support
 log = logging.getLogger("dypy")
 
 __author__ = "nickrsan"
-__version__ = "0.0.2b"
+__version__ = "0.0.3b"
 
 
 MAXIMIZE = numpy.max
 MINIMIZE = numpy.min
-
-
 
 
 def default_objective(*args, **kwargs):
@@ -64,10 +62,12 @@ def default_objective(*args, **kwargs):
 		A bare objective function that makes all cells 0 - provided as a default so we can build stages where someone
 		might do a manual override, but the DP should check to make sure the objective isn't the default with all cells
 		at 0 before solving.
+
 	:param args:
 	:param kwargs:
 	:return:
 	"""
+
 	return 0
 
 
@@ -333,6 +333,7 @@ class Stage(object):
 								example, with the course studying test problem - in the last stage, the state variable
 								can't be less than the decision variable. Maybe that's always the case though, and is
 								only a last stage problem?
+
 		:param prior:
 		:return:
 		"""
@@ -442,7 +443,9 @@ class SimplePrior(Prior):
 		and shifting the values down by 1 as we move across the decisions.
 
 		This prior application method *won't* work for multiple state variables or for state variables with different
-		discretization than decision variables.
+		discretization than decision variables. For more advanced situations with multiple states, we'll need to use
+		the linked_state attribute on the decision variables to understand how to apply priors. This functionality
+		may need to be re-engineered or expanded.
 	"""
 	def apply(self):
 		for row_index, row_value in reversed(list(enumerate(self.matrix))):  # go from bottom to top because we modify the items a row below as we go, but need their valus to be intact, so starting at the bottom allows us to use clean values for calculations
