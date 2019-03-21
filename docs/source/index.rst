@@ -6,9 +6,9 @@
 DyPy documentation
 ==================
 
-   DyPy is a generic Python backward dynamic programming solver focused on ease and flexibility.
-   It tries to provide simple defaults that can be overridden to build larger and more complex dynamic
-   programs.
+DyPy is a generic Python backward dynamic programming solver focused on ease and flexibility.
+It tries to provide simple defaults that can be overridden to build larger and more complex dynamic
+programs.
 
 .. toctree::
    :maxdepth: 2
@@ -16,6 +16,8 @@ DyPy documentation
 
    examples
    api
+
+Dypy was authored by `Nick Santos <https://nicksantos.com/>`_
 
 Indices and tables
 ==================

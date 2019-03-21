@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>DyPy API &mdash; DyPy 0.0.1b documentation</title>
+  <title>DyPy API &mdash; DyPy 0.0.3b documentation</title>
   
 
   
@@ -270,7 +270,9 @@ to False and run _setup_state_variables once all are added</li>
 numpy array), it applies these values to the previous stage by flipping the axis of the decision
 and shifting the values down by 1 as we move across the decisions.</p>
 <p>This prior application method <em>won’t</em> work for multiple state variables or for state variables with different
-discretization than decision variables.</p>
+discretization than decision variables. For more advanced situations with multiple states, we’ll need to use
+the linked_state attribute on the decision variables to understand how to apply priors. This functionality
+may need to be re-engineered or expanded.</p>
 <dl class="method">
 <dt id="dypy.__init__.SimplePrior.apply">
 <code class="descname">apply</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#SimplePrior.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.SimplePrior.apply" title="Permalink to this definition">¶</a></dt>
