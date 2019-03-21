@@ -78,7 +78,7 @@ class DynamicProgram(object):
 		Currently designed to only handle backward DPs
 	"""
 
-	def __init__(self, objective_function=default_objective, timestep_size=None, time_horizon=None, discount_rate=0, state_variables=None, selection_constraints=None, decision_variable=None, calculation_function=None):
+	def __init__(self, objective_function=default_objective, timestep_size=None, time_horizon=None, discount_rate=0, state_variables=None, selection_constraints=None, decision_variable=None, calculation_function=None, prior=None):
 		"""
 
 		:param objective_function: What function provides values to populate each cell in each stage? Not required if
@@ -96,6 +96,9 @@ class DynamicProgram(object):
 		:param calculation_function: What function are we using to evaluate? Basically, is this a maximization (benefit)
 		 or minimization (costs) setup. Provide the function object for max or min. Provide the actual `min` or `max functions
 		 (don't run it, just the name) or if convenient, use the shortcuts dp.MINIMIZE or dp.MAXIMIZE
+
+		:param prior: Which class should be used to handle priors (best values from future stages) - SimplePrior is best in many
+			cases, but may not apply everywhere and will be slow for large tables. Just provide the class object, not an instance.
 		"""
 		self.stages = []
 		self.timestep_size = timestep_size
@@ -121,6 +124,9 @@ class DynamicProgram(object):
 		self.objective_function = objective_function
 		self.calculation_function = calculation_function
 
+		# Default Prior Handler
+		self.prior_handler_class = prior
+
 		if self.calculation_function not in (numpy.max, numpy.min, MAXIMIZE, MINIMIZE):
 			raise ValueError("Calculation function must be either 'numpy.max', 'numpy.min' or one of the aliases in this package of dp.MAXIMIZE or dp.MINIMIZE")
 
@@ -131,9 +137,9 @@ class DynamicProgram(object):
 
 		# make values that we use as bounds in our calculations - when maximizing, use a negative number, and when minimizing, get close to infinity
 		# we use this for any routes through the DP that get excluded
-		if self.calculation_function is max:
-			self.exclusion_value = -1  # just need it to be less
-		elif self.calculation_function is min:
+		if self.calculation_function is numpy.max:
+			self.exclusion_value = -9223372036854775808
+		else:
 			self.exclusion_value = 9223372036854775808  # max value for a signed 64 bit int - this should force it to not be selected in minimization
 
 	def add_state_variable(self, variable, setup_state=True):
@@ -171,7 +177,7 @@ class DynamicProgram(object):
 			variable.column_index = index  # tell the variable what column it is
 
 	def add_stage(self, name):
-		stage = Stage(name=name, decision_variable=self.decision_variable, parent_dp=self)
+		stage = Stage(name=name, decision_variable=self.decision_variable, parent_dp=self, prior_handler=self.prior_handler_class)
 
 		self.stages.append(stage)
 		self._index_stages()
@@ -246,7 +252,7 @@ class DynamicProgram(object):
 
 
 class Stage(object):
-	def __init__(self, name, decision_variable, parent_dp, max_selections=7, previous=None, next_stage=None):
+	def __init__(self, name, decision_variable, parent_dp, max_selections=7, previous=None, next_stage=None, prior_handler=None):
 		"""
 
 		:param name:
@@ -259,6 +265,10 @@ class Stage(object):
 		self.parent_dp = parent_dp
 		self.decision_variable = decision_variable
 		self.max_selections = max_selections
+		self.prior_handler_class = prior_handler
+		self.prior_handler = None
+		self.create_prior_handler()
+
 		self.next_stage = next_stage
 		self.previous_stage = previous
 		self.matrix = None  # this will be created from the parameters when .optimize is run
@@ -266,6 +276,10 @@ class Stage(object):
 
 		self.pass_data = []
 		self.choices_index = []
+
+	def create_prior_handler(self):
+		if self.prior_handler_class is not None:
+			self.prior_handler = self.prior_handler_class(stage=self)
 
 	def build(self):
 		"""
@@ -288,6 +302,12 @@ class Stage(object):
 				self.matrix[row_id][column_id] = self.parent_dp.objective_function(stage=self,
 																					**support.merge_dicts(state_data,
 																										  decision_data))
+
+	def __str__(self):
+		return self.name
+
+	def __repr__(self):
+		return self.name
 
 	def optimize(self, prior=None):
 		"""
@@ -338,27 +358,27 @@ class Stage(object):
 		#	# now calculate the remaining values
 
 		# THIS LINE UNTIL LINE ABOVE if self.previous would be indented in the else block above
-		for row_index, row_value in enumerate(self.matrix):
-			for column_index, column_value in enumerate(self.matrix[row_index]):
-				if column_value == 0 and row_index - column_index >= 0:  # we only need to calculate fields that meet this condition - the way it's calculated, others will cause an IndexError anyway
-					stage_value = self.matrix[column_index-1][column_index]  # the value for this stage is on 1:1 line, so, it is where the indices are equal
-					prior_value = self.matrix[row_index-column_index][0]
-					if stage_value != 0 and prior_value != 0:  # if both are defined and not None
-						self.matrix[row_index][column_index] = stage_value + prior_value
 
 			# now remove the Nones so we can call min/max in Python 3
-		for row_index, row_value in enumerate(self.matrix):
-			for column_index, column_value in enumerate(self.matrix[row_index]):
-				if column_value == 0:
-					self.matrix[row_index][column_index] = self.parent_dp.exclusion_value  # setting to exclusion value makes it unselected still
+		#for row_index, row_value in enumerate(self.matrix):
+		#	for column_index, column_value in enumerate(self.matrix[row_index]):
+		#		if column_value == 0:
+		#			self.matrix[row_index][column_index] = self.parent_dp.exclusion_value  # setting to exclusion value makes it unselected still
 
+		if self.prior_handler is None:
+			raise ValueError("Prior handler not initialized - make sure you specify which class handles priors either"
+							 "at DynamicProgram initialization, or when building your stages. Set .prior_handler_class on either"
+							 "one to the class object that will handle priors.")
+
+		self.prior_handler.data = prior
+		self.prior_handler.matrix = self.matrix
 		# Add in previous stage
-		if prior is not None:
-			prior_shaped = prior.reshape(1, prior.size)
-			self.matrix += prior_shaped  # apply the prior down each column - probably need to make this only do it for the non index columns
+		if self.prior_handler.exists():
+			#prior_shaped = prior.reshape(prior.size, 1)  # reshape to the correct dimensions to broadcast it down the matrix
+			self.matrix = self.prior_handler.apply()
 
-		self.pass_data = self.parent_dp.calculation_function(self.matrix, axis=0)  # sum the rows and find the max
-		self.choices_index = self.parent_dp.index_calculation_function(self.matrix, axis=0)  # get the column of the min/max value
+		self.pass_data = self.parent_dp.calculation_function(self.matrix, axis=1)  # sum the rows and find the max
+		self.choices_index = self.parent_dp.index_calculation_function(self.matrix, axis=1)  # get the column of the min/max value
 
 		if self.previous_stage:
 			self.previous_stage.optimize(self.pass_data)  # now run the prior stage
@@ -387,10 +407,52 @@ class Stage(object):
 		#if self.selection_constraints:
 		#	number_of_items = max([0, column_of_best - self.selection_constraints[self.number]])  # take the max with 0 - if it's negative, it should be 0
 		#else:
-		number_of_items = column_of_best
-		print("{} - Number of items: {}, Total Cost/Benefit: {}".format(self.name, number_of_items, best_option))
+		self.decision_amount = self.parent_dp.decision_variable.options[column_of_best]
+		log.info("{} - Decision Amount at Stage: {}, Total Cost/Benefit: {}".format(self.name, self.decision_amount, best_option))
 
 		if self.next_stage:
-			self.next_stage.get_optimal_values(prior=number_of_items + prior)
+			self.next_stage.get_optimal_values(prior=self.decision_amount + prior)
 
 
+class Prior(object):
+	"""
+		A class for applying future stage values back to the previous stage
+	"""
+	def __init__(self, stage, data=None, matrix=None):
+		self.data = data
+		self.matrix = matrix
+		self.parent_stage = stage
+
+	def exists(self):
+		if self.data is not None:
+			return True
+		return False
+
+	def apply(self):
+		raise NotImplementedError("Must use a subclass of Prior, not Prior class itself")
+
+
+class SimplePrior(Prior):
+	"""
+		A simple implementation of the prior class - given a single set of optimal values from the future stage (as a 1D
+		numpy array), it applies these values to the previous stage by flipping the axis of the decision
+		and shifting the values down by 1 as we move across the decisions.
+
+		This prior application method *won't* work for multiple state variables or for state variables with different
+		discretization than decision variables.
+	"""
+	def apply(self):
+		for row_index, row_value in reversed(list(enumerate(self.matrix))):  # go from bottom to top because we modify the items a row below as we go, but need their valus to be intact, so starting at the bottom allows us to use clean values for calculations
+			for column_index, column_value in reversed(list(enumerate(row_value))):
+				#if column_value == 0 and row_index - column_index >= 0:  # we only need to calculate fields that meet this condition - the way it's calculated, others will cause an IndexError anyway
+				stage_value = self.matrix[row_index][column_index]  # the value for this stage is on 1:1 line, so, it is where the indices are equal
+
+				if stage_value == self.parent_stage.parent_dp.exclusion_value:
+					continue
+
+				try:
+					prior_value = self.data[row_index-column_index]
+					self.matrix[row_index+1][column_index] = stage_value + prior_value
+				except IndexError:
+					continue
+		return self.matrix
