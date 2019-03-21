@@ -370,10 +370,10 @@ class Stage(object):
 		if amount_remaining > 0:
 			available_options = self.pass_data[:amount_remaining]  # strip off the end of it to remove values that we can't use
 			best_option = available_options[-1]  # get the last value
-			row_of_best = available_options.index(best_option)  # now we need the actual row to use in the matrix
+			row_of_best = numpy.where(available_options == best_option)  # now we need the actual row to use in the matrix
 
-			if self.matrix:
-				column_of_best = self.matrix[row_of_best].index(best_option)  # get the column of the best option - also the number of days
+			if self.matrix.any():
+				column_of_best = numpy.where(self.matrix[row_of_best[0]] == best_option)[-1]  # get the column of the best option - also the number of days
 			else:  # this triggers for the last item, which doesn't have a matrix, but just a costs list
 				column_of_best = row_of_best + 1
 		else:
