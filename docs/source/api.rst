@@ -5,7 +5,7 @@ DyPy API
 
 :mod:`dypy` Package
 
-.. automodule:: dypy.__init__
+.. automodule:: dypy
     :members:
     :undoc-members:
     :show-inheritance:

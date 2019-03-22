@@ -272,6 +272,9 @@ class Stage(object):
 		self.prior_handler = None
 		self.create_prior_handler()
 
+		self.decision_amount = None
+		self.future_value_of_decision = None
+
 		self.next_stage = next_stage
 		self.previous_stage = previous
 		self.matrix = None  # this will be created from the parameters when .optimize is run
@@ -358,9 +361,8 @@ class Stage(object):
 		self.prior_handler.data = prior
 		self.prior_handler.matrix = self.matrix
 		# Add in previous stage
-		if self.prior_handler.exists():
-			#prior_shaped = prior.reshape(prior.size, 1)  # reshape to the correct dimensions to broadcast it down the matrix
-			self.matrix = self.prior_handler.apply()
+		if self.prior_handler.exists():  # if we have prior data
+			self.matrix = self.prior_handler.apply()  # then apply it to the current matrix
 
 		self.pass_data = self.parent_dp.calculation_function(self.matrix, axis=1)  # sum the rows and find the max
 		self.choices_index = self.parent_dp.index_calculation_function(self.matrix, axis=1)  # get the column of the min/max value
@@ -398,6 +400,7 @@ class Stage(object):
 		#	number_of_items = max([0, column_of_best - self.selection_constraints[self.number]])  # take the max with 0 - if it's negative, it should be 0
 		#else:
 		self.decision_amount = self.parent_dp.decision_variable.options[column_of_best]
+		self.future_value_of_decision = best_option
 		log.info("{} - Decision Amount at Stage: {}, Total Cost/Benefit: {}".format(self.name, self.decision_amount, best_option))
 
 		if self.next_stage:
@@ -436,10 +439,13 @@ class SimplePrior(Prior):
 	def apply(self):
 		for row_index, row_value in reversed(list(enumerate(self.matrix))):  # go from bottom to top because we modify the items a row below as we go, but need their valus to be intact, so starting at the bottom allows us to use clean values for calculations
 			for column_index, column_value in reversed(list(enumerate(row_value))):
+				if row_index - column_index <= 0:  # in these cases, we can't actually pull the prior value
+					continue
+
 				#if column_value == 0 and row_index - column_index >= 0:  # we only need to calculate fields that meet this condition - the way it's calculated, others will cause an IndexError anyway
 				stage_value = self.matrix[row_index][column_index]  # the value for this stage is on 1:1 line, so, it is where the indices are equal
 
-				if stage_value == self.parent_stage.parent_dp.exclusion_value:
+				if stage_value == self.parent_stage.parent_dp.exclusion_value:  # skip anything excluded elsewhere
 					continue
 
 				try:

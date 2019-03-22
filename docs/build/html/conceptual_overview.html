@@ -1,0 +1,268 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>DyPy Core Concepts and Classes &mdash; DyPy 0.0.3b documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="DyPy Examples" href="examples.html" />
+    <link rel="prev" title="DyPy documentation" href="index.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> DyPy
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">DyPy Core Concepts and Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dynamicprogram">DynamicProgram</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#objective-functions">Objective Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#stage">Stage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#statevariable">StateVariable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#decisionvariable">DecisionVariable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prior">Prior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reducer">Reducer</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">DyPy Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">DyPy API</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DyPy</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>DyPy Core Concepts and Classes</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/conceptual_overview.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="dypy-core-concepts-and-classes">
+<h1>DyPy Core Concepts and Classes<a class="headerlink" href="#dypy-core-concepts-and-classes" title="Permalink to this headline">¶</a></h1>
+<p>DyPy’s goal is to provide an interface to backward dynamic programming that supports the following priorities (in order):</p>
+<ol class="arabic simple">
+<li>Ease of learning and use</li>
+<li>Flexible/adaptable to new problems</li>
+<li>Speed (but only after 1 and 2 are satisfied)</li>
+</ol>
+<p>In support of these goals, this document describes the core classes and how you might use them to build a dynamic program
+with DyPy. While it outlines the core classes, and some of this document will be redundant to the API documentation, usage
+options are included here to support reuse and extension of the package.</p>
+<div class="section" id="dynamicprogram">
+<h2>DynamicProgram<a class="headerlink" href="#dynamicprogram" title="Permalink to this headline">¶</a></h2>
+<p>The Dynamic Program class is the core of DyPy. Each problem you wish to solve will involve creating an instance of this class
+and attaching the classes below to it in ways that tell it how to solve your problem. One important design consideration
+for DyPy is that it should be able to handle problems with multiple state variables</p>
+<p>DynamicProgram manages all data and the flow of the optimization. By default, it will build all the stages and manage their
+tables, but this part of the process can be customized as well (see <a class="reference internal" href="#stage">Stage</a> below for more)</p>
+<div class="section" id="objective-functions">
+<h3>Objective Functions<a class="headerlink" href="#objective-functions" title="Permalink to this headline">¶</a></h3>
+<p>The objective function will do some of the heavy lifting for your dynamic program, and must be created by the user for each
+specific optimization problem. DyPy will call the objective function for every combination of state variables and stage
+variables in each stage of the optimization and the objective function will need to return the cost or benefit value for
+that set of inputs. The objective function will be provided access to the <a class="reference internal" href="#stage">Stage</a> object for the stage it is currently
+evaluating, as well as the <em>values</em> of all of the state variables and the decision variable. These will be provided as
+keyword arguments to the objective function. See the <span class="xref std std-ref">examples</span> section for more information.</p>
+</div>
+</div>
+<div class="section" id="stage">
+<h2>Stage<a class="headerlink" href="#stage" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="statevariable">
+<h2>StateVariable<a class="headerlink" href="#statevariable" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="decisionvariable">
+<h2>DecisionVariable<a class="headerlink" href="#decisionvariable" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="prior">
+<h2>Prior<a class="headerlink" href="#prior" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="reducer">
+<h2>Reducer<a class="headerlink" href="#reducer" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="examples.html" class="btn btn-neutral float-right" title="DyPy Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="DyPy documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Nick Santos
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

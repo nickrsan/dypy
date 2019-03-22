@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>dypy.__init__ &mdash; DyPy 0.0.3b documentation</title>
+  <title>dypy &mdash; DyPy 0.0.3b documentation</title>
   
 
   
@@ -24,13 +24,13 @@
 
   
 
-  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
 
   
-  <script src="../../_static/js/modernizr.min.js"></script>
+  <script src="../_static/js/modernizr.min.js"></script>
 
 </head>
 
@@ -46,7 +46,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> DyPy
+            <a href="../index.html" class="icon icon-home"> DyPy
           
 
           
@@ -63,7 +63,7 @@
 
           
 <div role="search">
-  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
@@ -82,9 +82,9 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../conceptual_overview.html">DyPy Core Concepts and Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../examples.html">DyPy Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">DyPy API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../conceptual_overview.html">DyPy Core Concepts and Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">DyPy Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">DyPy API</a></li>
 </ul>
 
             
@@ -99,7 +99,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">DyPy</a>
+          <a href="../index.html">DyPy</a>
         
       </nav>
 
@@ -128,13 +128,11 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../index.html">Docs</a> &raquo;</li>
         
-          <li><a href="../index.html">Module code</a> &raquo;</li>
+          <li><a href="index.html">Module code</a> &raquo;</li>
         
-          <li><a href="../dypy.html">dypy</a> &raquo;</li>
-        
-      <li>dypy.__init__</li>
+      <li>dypy</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -149,7 +147,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <h1>Source code for dypy.__init__</h1><div class="highlight"><pre>
+  <h1>Source code for dypy</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Dynamic Program class - implements only backward dynamic programming.</span>
 <span class="sd">	Ideal usage is to have an objective function defined by the user, however they&#39;d like.</span>
@@ -209,7 +207,7 @@
 <span class="n">MINIMIZE</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">min</span>
 
 
-<div class="viewcode-block" id="default_objective"><a class="viewcode-back" href="../../api.html#dypy.__init__.default_objective">[docs]</a><span class="k">def</span> <span class="nf">default_objective</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="default_objective"><a class="viewcode-back" href="../api.html#dypy.default_objective">[docs]</a><span class="k">def</span> <span class="nf">default_objective</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		A bare objective function that makes all cells 0 - provided as a default so we can build stages where someone</span>
 <span class="sd">		might do a manual override, but the DP should check to make sure the objective isn&#39;t the default with all cells</span>
@@ -223,7 +221,7 @@
 	<span class="k">return</span> <span class="mi">0</span></div>
 
 
-<div class="viewcode-block" id="DynamicProgram"><a class="viewcode-back" href="../../api.html#dypy.__init__.DynamicProgram">[docs]</a><span class="k">class</span> <span class="nc">DynamicProgram</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicProgram"><a class="viewcode-back" href="../api.html#dypy.DynamicProgram">[docs]</a><span class="k">class</span> <span class="nc">DynamicProgram</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		This object actually runs the DP - doesn&#39;t currently support multiple decision variables or probabilities.</span>
 
@@ -298,7 +296,7 @@
 		<span class="k">else</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">exclusion_value</span> <span class="o">=</span> <span class="mi">9223372036854775808</span>  <span class="c1"># max value for a signed 64 bit int - this should force it to not be selected in minimization</span>
 
-<div class="viewcode-block" id="DynamicProgram.add_state_variable"><a class="viewcode-back" href="../../api.html#dypy.__init__.DynamicProgram.add_state_variable">[docs]</a>	<span class="k">def</span> <span class="nf">add_state_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">,</span> <span class="n">setup_state</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicProgram.add_state_variable"><a class="viewcode-back" href="../api.html#dypy.DynamicProgram.add_state_variable">[docs]</a>	<span class="k">def</span> <span class="nf">add_state_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">,</span> <span class="n">setup_state</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">		:param variable: A StateVariable object - afterward, will be available in .state_variables</span>
@@ -332,7 +330,7 @@
 
 			<span class="n">variable</span><span class="o">.</span><span class="n">column_index</span> <span class="o">=</span> <span class="n">index</span>  <span class="c1"># tell the variable what column it is</span>
 
-<div class="viewcode-block" id="DynamicProgram.add_stage"><a class="viewcode-back" href="../../api.html#dypy.__init__.DynamicProgram.add_stage">[docs]</a>	<span class="k">def</span> <span class="nf">add_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicProgram.add_stage"><a class="viewcode-back" href="../api.html#dypy.DynamicProgram.add_stage">[docs]</a>	<span class="k">def</span> <span class="nf">add_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
 		<span class="n">stage</span> <span class="o">=</span> <span class="n">Stage</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">decision_variable</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">decision_variable</span><span class="p">,</span> <span class="n">parent_dp</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">prior_handler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prior_handler_class</span><span class="p">)</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">stages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span>
@@ -353,7 +351,7 @@
 			<span class="bp">self</span><span class="o">.</span><span class="n">stages</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">previous_stage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stages</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">stages</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">number</span> <span class="o">=</span> <span class="n">i</span>
 
-<div class="viewcode-block" id="DynamicProgram.build_stages"><a class="viewcode-back" href="../../api.html#dypy.__init__.DynamicProgram.build_stages">[docs]</a>	<span class="k">def</span> <span class="nf">build_stages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name_prefix</span><span class="o">=</span><span class="s2">&quot;Step&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicProgram.build_stages"><a class="viewcode-back" href="../api.html#dypy.DynamicProgram.build_stages">[docs]</a>	<span class="k">def</span> <span class="nf">build_stages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name_prefix</span><span class="o">=</span><span class="s2">&quot;Step&quot;</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			Make a stage for every timestep</span>
 <span class="sd">		:param name_prefix: The string that will go before the stage number when printing information</span>
@@ -376,7 +374,7 @@
 
 		<span class="k">return</span> <span class="kc">True</span>  <span class="c1"># if we make it out here, we&#39;re in the default state</span>
 
-<div class="viewcode-block" id="DynamicProgram.run"><a class="viewcode-back" href="../../api.html#dypy.__init__.DynamicProgram.run">[docs]</a>	<span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicProgram.run"><a class="viewcode-back" href="../api.html#dypy.DynamicProgram.run">[docs]</a>	<span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_default</span><span class="p">():</span>
 			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Objective function must be provided before running DP. Either provide it as an argument&quot;</span>
@@ -407,7 +405,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">stages</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_optimal_values</span><span class="p">()</span></div></div>
 
 
-<div class="viewcode-block" id="Stage"><a class="viewcode-back" href="../../api.html#dypy.__init__.Stage">[docs]</a><span class="k">class</span> <span class="nc">Stage</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Stage"><a class="viewcode-back" href="../api.html#dypy.Stage">[docs]</a><span class="k">class</span> <span class="nc">Stage</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">decision_variable</span><span class="p">,</span> <span class="n">parent_dp</span><span class="p">,</span> <span class="n">previous</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">next_stage</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prior_handler</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 
@@ -424,6 +422,9 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span> <span class="o">=</span> <span class="kc">None</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">create_prior_handler</span><span class="p">()</span>
 
+		<span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">future_value_of_decision</span> <span class="o">=</span> <span class="kc">None</span>
+
 		<span class="bp">self</span><span class="o">.</span><span class="n">next_stage</span> <span class="o">=</span> <span class="n">next_stage</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">previous_stage</span> <span class="o">=</span> <span class="n">previous</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># this will be created from the parameters when .optimize is run</span>
@@ -432,11 +433,11 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">pass_data</span> <span class="o">=</span> <span class="p">[]</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">choices_index</span> <span class="o">=</span> <span class="p">[]</span>
 
-<div class="viewcode-block" id="Stage.create_prior_handler"><a class="viewcode-back" href="../../api.html#dypy.__init__.Stage.create_prior_handler">[docs]</a>	<span class="k">def</span> <span class="nf">create_prior_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Stage.create_prior_handler"><a class="viewcode-back" href="../api.html#dypy.Stage.create_prior_handler">[docs]</a>	<span class="k">def</span> <span class="nf">create_prior_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler_class</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Stage.build"><a class="viewcode-back" href="../../api.html#dypy.__init__.Stage.build">[docs]</a>	<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Stage.build"><a class="viewcode-back" href="../api.html#dypy.Stage.build">[docs]</a>	<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			Builds the stage table - evaluates the objective function for each location, passing the various</span>
 <span class="sd">			values to it so it can provide a result. Does *not* handle prior data though - that is handled when</span>
@@ -464,7 +465,7 @@
 	<span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
 
-<div class="viewcode-block" id="Stage.optimize"><a class="viewcode-back" href="../../api.html#dypy.__init__.Stage.optimize">[docs]</a>	<span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Stage.optimize"><a class="viewcode-back" href="../api.html#dypy.Stage.optimize">[docs]</a>	<span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			This handles the actual backward DP calculation - assumes that the stage has a matrix that is built</span>
 <span class="sd">			already with appropriate values.</span>
@@ -493,17 +494,6 @@
 		<span class="c1">#if self.parent_dp.selection_constraints and self.number is None:</span>
 		<span class="c1">#	raise ValueError(&quot;Stage number(.number) must be identified in sequence in order to use selection constraints&quot;)</span>
 
-		<span class="c1"># first, we need to get the data from the prior stage - if nothing was passed in, we&#39;re on the first step and can skip some things</span>
-		<span class="c1">#if prior is None:</span>
-		<span class="c1">#	# TODO: This won&#39;t apply to more advanced scenarios - this should go in the &quot;build&quot; phase - where we&#39;ll get the values</span>
-		<span class="c1">#	# TODO: for each cell - then we can deal with passing and applying the backward values here.</span>
-		<span class="c1">#	self.pass_data = self.decision_variable.options  # TODO: This isn&#39;t correct - also, don&#39;t need a separate procedure here - just calculate the best values and send them back</span>
-		<span class="c1">#	if self.parent_dp.selection_constraints:  # then we have selections constraints</span>
-		<span class="c1">#		for row_index, row_value in enumerate(self.pass_data):</span>
-		<span class="c1">#			if row_index &gt;= len(self.pass_data) - self.parent_dp.selection_constraints[self.number]:</span>
-		<span class="c1">#				self.pass_data[row_index] = self.parent_dp.exclusion_value</span>
-		<span class="c1">#else:</span>
-
 		<span class="c1">#	# set up maximum selection constraints based on what will have been required previously</span>
 		<span class="c1">#	if self.parent_dp.selection_constraints:  # then we have selections constraints</span>
 		<span class="c1">#		for row_index, row_value in enumerate(self.matrix):</span>
@@ -513,14 +503,6 @@
 		<span class="c1">#</span>
 		<span class="c1">#	# now calculate the remaining values</span>
 
-		<span class="c1"># THIS LINE UNTIL LINE ABOVE if self.previous would be indented in the else block above</span>
-
-			<span class="c1"># now remove the Nones so we can call min/max in Python 3</span>
-		<span class="c1">#for row_index, row_value in enumerate(self.matrix):</span>
-		<span class="c1">#	for column_index, column_value in enumerate(self.matrix[row_index]):</span>
-		<span class="c1">#		if column_value == 0:</span>
-		<span class="c1">#			self.matrix[row_index][column_index] = self.parent_dp.exclusion_value  # setting to exclusion value makes it unselected still</span>
-
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Prior handler not initialized - make sure you specify which class handles priors either&quot;</span>
 							 <span class="s2">&quot;at DynamicProgram initialization, or when building your stages. Set .prior_handler_class on either&quot;</span>
@@ -529,9 +511,8 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">prior</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span>
 		<span class="c1"># Add in previous stage</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-			<span class="c1">#prior_shaped = prior.reshape(prior.size, 1)  # reshape to the correct dimensions to broadcast it down the matrix</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>  <span class="c1"># if we have prior data</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>  <span class="c1"># then apply it to the current matrix</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">pass_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">calculation_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># sum the rows and find the max</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">choices_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">index_calculation_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># get the column of the min/max value</span>
@@ -539,14 +520,19 @@
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_stage</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">previous_stage</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pass_data</span><span class="p">)</span>  <span class="c1"># now run the prior stage</span></div>
 
-<div class="viewcode-block" id="Stage.get_optimal_values"><a class="viewcode-back" href="../../api.html#dypy.__init__.Stage.get_optimal_values">[docs]</a>	<span class="k">def</span> <span class="nf">get_optimal_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="Stage.get_optimal_values"><a class="viewcode-back" href="../api.html#dypy.Stage.get_optimal_values">[docs]</a>	<span class="k">def</span> <span class="nf">get_optimal_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			After running the backward DP, moves forward and finds the best choices at each stage.</span>
 <span class="sd">		:param prior: The value of the choice at each stage</span>
 <span class="sd">		:return:</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 
-		<span class="n">amount_remaining</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">max_selections</span> <span class="o">-</span> <span class="n">prior</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">max_selections</span><span class="p">:</span>  <span class="c1"># this format probably only works for 1 state variable and will need to be re-engineered</span>
+			<span class="n">max_selections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">max_selections</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">max_selections</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">_all_states</span><span class="p">)</span>
+
+		<span class="n">amount_remaining</span> <span class="o">=</span> <span class="n">max_selections</span> <span class="o">-</span> <span class="n">prior</span>
 		<span class="k">if</span> <span class="n">amount_remaining</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
 			<span class="n">available_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pass_data</span><span class="p">[:</span><span class="n">amount_remaining</span><span class="p">]</span>  <span class="c1"># strip off the end of it to remove values that we can&#39;t use</span>
 			<span class="n">best_option</span> <span class="o">=</span> <span class="n">available_options</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># get the last value</span>
@@ -564,13 +550,14 @@
 		<span class="c1">#	number_of_items = max([0, column_of_best - self.selection_constraints[self.number]])  # take the max with 0 - if it&#39;s negative, it should be 0</span>
 		<span class="c1">#else:</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">decision_variable</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="n">column_of_best</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">future_value_of_decision</span> <span class="o">=</span> <span class="n">best_option</span>
 		<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> - Decision Amount at Stage: </span><span class="si">{}</span><span class="s2">, Total Cost/Benefit: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span><span class="p">,</span> <span class="n">best_option</span><span class="p">))</span>
 
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_stage</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">next_stage</span><span class="o">.</span><span class="n">get_optimal_values</span><span class="p">(</span><span class="n">prior</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span> <span class="o">+</span> <span class="n">prior</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="Prior"><a class="viewcode-back" href="../../api.html#dypy.__init__.Prior">[docs]</a><span class="k">class</span> <span class="nc">Prior</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Prior"><a class="viewcode-back" href="../api.html#dypy.Prior">[docs]</a><span class="k">class</span> <span class="nc">Prior</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		A class for applying future stage values back to the previous stage</span>
 <span class="sd">	&quot;&quot;&quot;</span>
@@ -579,16 +566,16 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">parent_stage</span> <span class="o">=</span> <span class="n">stage</span>
 
-<div class="viewcode-block" id="Prior.exists"><a class="viewcode-back" href="../../api.html#dypy.__init__.Prior.exists">[docs]</a>	<span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Prior.exists"><a class="viewcode-back" href="../api.html#dypy.Prior.exists">[docs]</a>	<span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="k">return</span> <span class="kc">True</span>
 		<span class="k">return</span> <span class="kc">False</span></div>
 
-<div class="viewcode-block" id="Prior.apply"><a class="viewcode-back" href="../../api.html#dypy.__init__.Prior.apply">[docs]</a>	<span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Prior.apply"><a class="viewcode-back" href="../api.html#dypy.Prior.apply">[docs]</a>	<span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Must use a subclass of Prior, not Prior class itself&quot;</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="SimplePrior"><a class="viewcode-back" href="../../api.html#dypy.__init__.SimplePrior">[docs]</a><span class="k">class</span> <span class="nc">SimplePrior</span><span class="p">(</span><span class="n">Prior</span><span class="p">):</span>
+<div class="viewcode-block" id="SimplePrior"><a class="viewcode-back" href="../api.html#dypy.SimplePrior">[docs]</a><span class="k">class</span> <span class="nc">SimplePrior</span><span class="p">(</span><span class="n">Prior</span><span class="p">):</span>
 	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		A simple implementation of the prior class - given a single set of optimal values from the future stage (as a 1D</span>
 <span class="sd">		numpy array), it applies these values to the previous stage by flipping the axis of the decision</span>
@@ -599,13 +586,16 @@
 <span class="sd">		the linked_state attribute on the decision variables to understand how to apply priors. This functionality</span>
 <span class="sd">		may need to be re-engineered or expanded.</span>
 <span class="sd">	&quot;&quot;&quot;</span>
-<div class="viewcode-block" id="SimplePrior.apply"><a class="viewcode-back" href="../../api.html#dypy.__init__.SimplePrior.apply">[docs]</a>	<span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SimplePrior.apply"><a class="viewcode-back" href="../api.html#dypy.SimplePrior.apply">[docs]</a>	<span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">for</span> <span class="n">row_index</span><span class="p">,</span> <span class="n">row_value</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">))):</span>  <span class="c1"># go from bottom to top because we modify the items a row below as we go, but need their valus to be intact, so starting at the bottom allows us to use clean values for calculations</span>
 			<span class="k">for</span> <span class="n">column_index</span><span class="p">,</span> <span class="n">column_value</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">row_value</span><span class="p">))):</span>
+				<span class="k">if</span> <span class="n">row_index</span> <span class="o">-</span> <span class="n">column_index</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># in these cases, we can&#39;t actually pull the prior value</span>
+					<span class="k">continue</span>
+
 				<span class="c1">#if column_value == 0 and row_index - column_index &gt;= 0:  # we only need to calculate fields that meet this condition - the way it&#39;s calculated, others will cause an IndexError anyway</span>
 				<span class="n">stage_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">row_index</span><span class="p">][</span><span class="n">column_index</span><span class="p">]</span>  <span class="c1"># the value for this stage is on 1:1 line, so, it is where the indices are equal</span>
 
-				<span class="k">if</span> <span class="n">stage_value</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_stage</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">exclusion_value</span><span class="p">:</span>
+				<span class="k">if</span> <span class="n">stage_value</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_stage</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">exclusion_value</span><span class="p">:</span>  <span class="c1"># skip anything excluded elsewhere</span>
 					<span class="k">continue</span>
 
 				<span class="k">try</span><span class="p">:</span>
@@ -647,15 +637,15 @@
 
     
     
-      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../../_static/jquery.js"></script>
-        <script type="text/javascript" src="../../_static/underscore.js"></script>
-        <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
     
 
   
 
-  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
 
   <script type="text/javascript">
       jQuery(function () {

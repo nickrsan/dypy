@@ -29,7 +29,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="DyPy API" href="api.html" />
-    <link rel="prev" title="DyPy documentation" href="index.html" /> 
+    <link rel="prev" title="DyPy Core Concepts and Classes" href="conceptual_overview.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -84,6 +84,7 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="conceptual_overview.html">DyPy Core Concepts and Classes</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">DyPy Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#programming-effort">Programming Effort</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#solution">Solution</a></li>
@@ -235,10 +236,10 @@ of bugs you fix in each category as a function of time as follows:</p>
 <p>Using DyPy, we’ll set up each category of work as a stage since we’ll do them sequentially,
 and then build an objective function that provides the number of bugs closed for a given
 number of days of effort.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># we have 12 days available to us for studying</span>
-<span class="n">state_variable</span> <span class="o">=</span> <span class="n">dypy</span><span class="o">.</span><span class="n">StateVariable</span><span class="p">(</span><span class="s2">&quot;Days Spent On Category&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">])</span>
-<span class="c1"># but we can only spend between 1 and 4 days studying for any single course</span>
-<span class="n">decision_variable</span> <span class="o">=</span> <span class="n">dypy</span><span class="o">.</span><span class="n">DecisionVariable</span><span class="p">(</span><span class="s2">&quot;Time on Category&quot;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># we have 12 days available to us for work</span>
+<span class="n">state_variable</span> <span class="o">=</span> <span class="n">dypy</span><span class="o">.</span><span class="n">StateVariable</span><span class="p">(</span><span class="s2">&quot;Days Spent On Category&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">13</span><span class="p">))</span>
+<span class="c1"># but we can only spend between 1 and 5 days sworking on a single category</span>
+<span class="n">decision_variable</span> <span class="o">=</span> <span class="n">dypy</span><span class="o">.</span><span class="n">DecisionVariable</span><span class="p">(</span><span class="s2">&quot;Time on Category&quot;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
 
 <span class="k">def</span> <span class="nf">objective_function</span><span class="p">(</span><span class="n">stage</span><span class="p">,</span> <span class="n">days_spent_on_category</span><span class="p">,</span> <span class="n">time_on_category</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -284,11 +285,11 @@ number of days of effort.</p>
 
 <span class="c1"># each category will be a stage, in effect - tell it to create all five stages as empty</span>
 <span class="n">dynamic_program</span><span class="o">.</span><span class="n">build_stages</span><span class="p">(</span><span class="n">name_prefix</span><span class="o">=</span><span class="s2">&quot;Category&quot;</span><span class="p">)</span>  <span class="c1"># assigns names by default, but we can override them</span>
-<span class="n">stage_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Core&quot;</span><span class="p">,</span> <span class="s2">&quot;UI/UX&quot;</span><span class="p">,</span> <span class="s2">&quot;Network&quot;</span><span class="p">,</span> <span class="s2">&quot;Database&quot;</span><span class="p">,</span> <span class="s2">&quot;API&quot;</span><span class="p">]</span>
-<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">stage</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dynamic_program</span><span class="o">.</span><span class="n">stages</span><span class="p">):</span>
-    <span class="n">dynamic_program</span><span class="o">.</span><span class="n">stages</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">stage_names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># these need to match the order</span>
+<span class="n">stage_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Core&quot;</span><span class="p">,</span> <span class="s2">&quot;UI/UX&quot;</span><span class="p">,</span> <span class="s2">&quot;Network&quot;</span><span class="p">,</span> <span class="s2">&quot;Database&quot;</span><span class="p">,</span> <span class="s2">&quot;API&quot;</span><span class="p">]</span>  <span class="c1"># make a list of names in the same order they&#39;re used in our objective function</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">stage</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dynamic_program</span><span class="o">.</span><span class="n">stages</span><span class="p">):</span>  <span class="c1"># and use it to set the value of .name for each stage</span>
+    <span class="n">dynamic_program</span><span class="o">.</span><span class="n">stages</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">stage_names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 
-<span class="n">dynamic_program</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">dynamic_program</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>  <span class="c1"># run the dynamic program - results are logged to python logger `dypy` and decisions are set on each stage as .decision_amount</span>
 </pre></div>
 </div>
 </div>
@@ -306,7 +307,7 @@ number of days of effort.</p>
         <a href="api.html" class="btn btn-neutral float-right" title="DyPy API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="DyPy documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="conceptual_overview.html" class="btn btn-neutral" title="DyPy Core Concepts and Classes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

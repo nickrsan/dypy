@@ -83,6 +83,7 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="conceptual_overview.html">DyPy Core Concepts and Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">DyPy Examples</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">DyPy API</a></li>
 </ul>
@@ -151,8 +152,8 @@
             
   <div class="section" id="dypy-api">
 <span id="code"></span><h1>DyPy API<a class="headerlink" href="#dypy-api" title="Permalink to this headline">¶</a></h1>
-<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">dypy</span></code> Package</p>
-<span class="target" id="module-dypy.__init__"></span><p>Dynamic Program class - implements only backward dynamic programming.
+<p><a class="reference internal" href="#module-dypy" title="dypy"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dypy</span></code></a> Package</p>
+<span class="target" id="module-dypy"></span><p>Dynamic Program class - implements only backward dynamic programming.
 Ideal usage is to have an objective function defined by the user, however they’d like.</p>
 <p>The user defines as many StateVariable instances as they have state variables in their DP and they define
 a DecisionVariable. The objective function should be prepared to take arguments with keyword values for each of
@@ -187,19 +188,19 @@ decison_variable=decision_var)</dd>
 dynamic_program.get_optimal_values()  # runs the forward method to obtain choices
 <a href="#id3"><span class="problematic" id="id4">``</span></a><a href="#id5"><span class="problematic" id="id6">`</span></a></p>
 <dl class="class">
-<dt id="dypy.__init__.DynamicProgram">
-<em class="property">class </em><code class="descclassname">dypy.__init__.</code><code class="descname">DynamicProgram</code><span class="sig-paren">(</span><em>objective_function=&lt;function default_objective&gt;</em>, <em>timestep_size=None</em>, <em>time_horizon=None</em>, <em>discount_rate=0</em>, <em>state_variables=None</em>, <em>max_selections=None</em>, <em>selection_constraints=None</em>, <em>decision_variable=None</em>, <em>calculation_function=None</em>, <em>prior=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#DynamicProgram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.DynamicProgram" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.DynamicProgram">
+<em class="property">class </em><code class="descclassname">dypy.</code><code class="descname">DynamicProgram</code><span class="sig-paren">(</span><em>objective_function=&lt;function default_objective&gt;</em>, <em>timestep_size=None</em>, <em>time_horizon=None</em>, <em>discount_rate=0</em>, <em>state_variables=None</em>, <em>max_selections=None</em>, <em>selection_constraints=None</em>, <em>decision_variable=None</em>, <em>calculation_function=None</em>, <em>prior=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DynamicProgram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DynamicProgram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This object actually runs the DP - doesn’t currently support multiple decision variables or probabilities.</p>
 <p>Currently designed to only handle backward DPs</p>
 <dl class="method">
-<dt id="dypy.__init__.DynamicProgram.add_stage">
-<code class="descname">add_stage</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#DynamicProgram.add_stage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.DynamicProgram.add_stage" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.DynamicProgram.add_stage">
+<code class="descname">add_stage</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DynamicProgram.add_stage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DynamicProgram.add_stage" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="dypy.__init__.DynamicProgram.add_state_variable">
-<code class="descname">add_state_variable</code><span class="sig-paren">(</span><em>variable</em>, <em>setup_state=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#DynamicProgram.add_state_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.DynamicProgram.add_state_variable" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.DynamicProgram.add_state_variable">
+<code class="descname">add_state_variable</code><span class="sig-paren">(</span><em>variable</em>, <em>setup_state=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DynamicProgram.add_state_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DynamicProgram.add_state_variable" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -222,8 +223,8 @@ to False and run _setup_state_variables once all are added</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="dypy.__init__.DynamicProgram.build_stages">
-<code class="descname">build_stages</code><span class="sig-paren">(</span><em>name_prefix='Step'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#DynamicProgram.build_stages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.DynamicProgram.build_stages" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.DynamicProgram.build_stages">
+<code class="descname">build_stages</code><span class="sig-paren">(</span><em>name_prefix='Step'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DynamicProgram.build_stages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DynamicProgram.build_stages" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div>Make a stage for every timestep</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
@@ -239,33 +240,33 @@ to False and run _setup_state_variables once all are added</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="dypy.__init__.DynamicProgram.run">
-<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#DynamicProgram.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.DynamicProgram.run" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.DynamicProgram.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DynamicProgram.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DynamicProgram.run" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="dypy.__init__.Prior">
-<em class="property">class </em><code class="descclassname">dypy.__init__.</code><code class="descname">Prior</code><span class="sig-paren">(</span><em>stage</em>, <em>data=None</em>, <em>matrix=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#Prior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.Prior" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.Prior">
+<em class="property">class </em><code class="descclassname">dypy.</code><code class="descname">Prior</code><span class="sig-paren">(</span><em>stage</em>, <em>data=None</em>, <em>matrix=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Prior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Prior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A class for applying future stage values back to the previous stage</p>
 <dl class="method">
-<dt id="dypy.__init__.Prior.apply">
-<code class="descname">apply</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#Prior.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.Prior.apply" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.Prior.apply">
+<code class="descname">apply</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Prior.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Prior.apply" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="dypy.__init__.Prior.exists">
-<code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#Prior.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.Prior.exists" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.Prior.exists">
+<code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Prior.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Prior.exists" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="dypy.__init__.SimplePrior">
-<em class="property">class </em><code class="descclassname">dypy.__init__.</code><code class="descname">SimplePrior</code><span class="sig-paren">(</span><em>stage</em>, <em>data=None</em>, <em>matrix=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#SimplePrior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.SimplePrior" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#dypy.__init__.Prior" title="dypy.__init__.Prior"><code class="xref py py-class docutils literal notranslate"><span class="pre">dypy.__init__.Prior</span></code></a></p>
+<dt id="dypy.SimplePrior">
+<em class="property">class </em><code class="descclassname">dypy.</code><code class="descname">SimplePrior</code><span class="sig-paren">(</span><em>stage</em>, <em>data=None</em>, <em>matrix=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#SimplePrior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.SimplePrior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dypy.Prior" title="dypy.Prior"><code class="xref py py-class docutils literal notranslate"><span class="pre">dypy.Prior</span></code></a></p>
 <p>A simple implementation of the prior class - given a single set of optimal values from the future stage (as a 1D
 numpy array), it applies these values to the previous stage by flipping the axis of the decision
 and shifting the values down by 1 as we move across the decisions.</p>
@@ -274,19 +275,19 @@ discretization than decision variables. For more advanced situations with multip
 the linked_state attribute on the decision variables to understand how to apply priors. This functionality
 may need to be re-engineered or expanded.</p>
 <dl class="method">
-<dt id="dypy.__init__.SimplePrior.apply">
-<code class="descname">apply</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#SimplePrior.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.SimplePrior.apply" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.SimplePrior.apply">
+<code class="descname">apply</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#SimplePrior.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.SimplePrior.apply" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="dypy.__init__.Stage">
-<em class="property">class </em><code class="descclassname">dypy.__init__.</code><code class="descname">Stage</code><span class="sig-paren">(</span><em>name</em>, <em>decision_variable</em>, <em>parent_dp</em>, <em>previous=None</em>, <em>next_stage=None</em>, <em>prior_handler=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#Stage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.Stage" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.Stage">
+<em class="property">class </em><code class="descclassname">dypy.</code><code class="descname">Stage</code><span class="sig-paren">(</span><em>name</em>, <em>decision_variable</em>, <em>parent_dp</em>, <em>previous=None</em>, <em>next_stage=None</em>, <em>prior_handler=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Stage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Stage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
-<dt id="dypy.__init__.Stage.build">
-<code class="descname">build</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#Stage.build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.Stage.build" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.Stage.build">
+<code class="descname">build</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Stage.build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Stage.build" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div>Builds the stage table - evaluates the objective function for each location, passing the various
 values to it so it can provide a result. Does <em>not</em> handle prior data though - that is handled when
@@ -303,13 +304,13 @@ the stage table and handling the prior can do so.</div></blockquote>
 </dd></dl>
 
 <dl class="method">
-<dt id="dypy.__init__.Stage.create_prior_handler">
-<code class="descname">create_prior_handler</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#Stage.create_prior_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.Stage.create_prior_handler" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.Stage.create_prior_handler">
+<code class="descname">create_prior_handler</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Stage.create_prior_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Stage.create_prior_handler" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="dypy.__init__.Stage.get_optimal_values">
-<code class="descname">get_optimal_values</code><span class="sig-paren">(</span><em>prior=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#Stage.get_optimal_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.Stage.get_optimal_values" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.Stage.get_optimal_values">
+<code class="descname">get_optimal_values</code><span class="sig-paren">(</span><em>prior=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Stage.get_optimal_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Stage.get_optimal_values" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div>After running the backward DP, moves forward and finds the best choices at each stage.</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
@@ -325,8 +326,8 @@ the stage table and handling the prior can do so.</div></blockquote>
 </dd></dl>
 
 <dl class="method">
-<dt id="dypy.__init__.Stage.optimize">
-<code class="descname">optimize</code><span class="sig-paren">(</span><em>prior=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#Stage.optimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.Stage.optimize" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.Stage.optimize">
+<code class="descname">optimize</code><span class="sig-paren">(</span><em>prior=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Stage.optimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Stage.optimize" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div><p>This handles the actual backward DP calculation - assumes that the stage has a matrix that is built
 already with appropriate values.</p>
@@ -383,8 +384,8 @@ only a last stage problem?</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="dypy.__init__.default_objective">
-<code class="descclassname">dypy.__init__.</code><code class="descname">default_objective</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/__init__.html#default_objective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.__init__.default_objective" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.default_objective">
+<code class="descclassname">dypy.</code><code class="descname">default_objective</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#default_objective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.default_objective" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div>A bare objective function that makes all cells 0 - provided as a default so we can build stages where someone
 might do a manual override, but the DP should check to make sure the objective isn’t the default with all cells
