@@ -341,17 +341,6 @@ class Stage(object):
 		#if self.parent_dp.selection_constraints and self.number is None:
 		#	raise ValueError("Stage number(.number) must be identified in sequence in order to use selection constraints")
 
-		# first, we need to get the data from the prior stage - if nothing was passed in, we're on the first step and can skip some things
-		#if prior is None:
-		#	# TODO: This won't apply to more advanced scenarios - this should go in the "build" phase - where we'll get the values
-		#	# TODO: for each cell - then we can deal with passing and applying the backward values here.
-		#	self.pass_data = self.decision_variable.options  # TODO: This isn't correct - also, don't need a separate procedure here - just calculate the best values and send them back
-		#	if self.parent_dp.selection_constraints:  # then we have selections constraints
-		#		for row_index, row_value in enumerate(self.pass_data):
-		#			if row_index >= len(self.pass_data) - self.parent_dp.selection_constraints[self.number]:
-		#				self.pass_data[row_index] = self.parent_dp.exclusion_value
-		#else:
-
 		#	# set up maximum selection constraints based on what will have been required previously
 		#	if self.parent_dp.selection_constraints:  # then we have selections constraints
 		#		for row_index, row_value in enumerate(self.matrix):
@@ -360,14 +349,6 @@ class Stage(object):
 		#						self.matrix[row_index][column_index] = self.parent_dp.exclusion_value
 		#
 		#	# now calculate the remaining values
-
-		# THIS LINE UNTIL LINE ABOVE if self.previous would be indented in the else block above
-
-			# now remove the Nones so we can call min/max in Python 3
-		#for row_index, row_value in enumerate(self.matrix):
-		#	for column_index, column_value in enumerate(self.matrix[row_index]):
-		#		if column_value == 0:
-		#			self.matrix[row_index][column_index] = self.parent_dp.exclusion_value  # setting to exclusion value makes it unselected still
 
 		if self.prior_handler is None:
 			raise ValueError("Prior handler not initialized - make sure you specify which class handles priors either"

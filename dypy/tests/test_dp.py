@@ -87,18 +87,48 @@ class SimpleDPTestFunction(unittest.TestCase):
 		self.assertEqual(3, dynamic_program.stages[2].decision_amount)
 		self.assertEqual(1, dynamic_program.stages[3].decision_amount)
 
-	def test_programming_effort(self):
+
+class ProgrammingProblemTest(unittest.TestCase):
+	"""
+		See documentation examples for scenario this is replicating
+	"""
+	def test_programming_effort_with_zeros_allowed(self):
+		"""
+			The optimal amounts are different when zero effort is allowed than when all
+			must be 1 or greater.
+		:return:
+		"""
+		decision_options = range(0, 6)
+		dp = self._test_programming_effort(decision_options=decision_options)
+
+		self.assertEqual(2, dp.stages[0].decision_amount)
+		self.assertEqual(2, dp.stages[1].decision_amount)
+		self.assertEqual(0, dp.stages[2].decision_amount)
+		self.assertEqual(5, dp.stages[3].decision_amount)
+		self.assertEqual(3, dp.stages[4].decision_amount)
+
+	def test_programming_effort_no_zeros(self):
+		decision_options = range(1, 6)
+		dp = self._test_programming_effort(decision_options=decision_options)
+
+		self.assertEqual(2, dp.stages[0].decision_amount)
+		self.assertEqual(2, dp.stages[1].decision_amount)
+		self.assertEqual(1, dp.stages[2].decision_amount)
+		self.assertEqual(5, dp.stages[3].decision_amount)
+		self.assertEqual(2, dp.stages[4].decision_amount)
+
+	def _test_programming_effort(self, decision_options):
 		"""
 			A slightly larger problem that we use in the examples in the documentation - the results diverge from my simple
 			solver code, so figuring out which is correct and building that into the test here will be important
 		:return:
 		"""
-		# we have 12 days available to us for studying
-		state_variable = dypy.StateVariable("Days Spent On Category", values=range(1, 13))
-		# but we can only spend between 1 and 4 days studying for any single course
-		decision_variable = dypy.DecisionVariable("Time on Category", options=range(1, 6))
+		# we have 12 days available to us for work
+		state_variable = dypy.StateVariable("Days Available for Category", values=range(1, 13))
+		# but we can only spend between 1 and 5 days sworking on a single category
+		decision_variable = dypy.DecisionVariable("Time on Category", options=decision_options)
 
-		def objective_function(stage, days_spent_on_category, time_on_category):
+		def objective_function(stage, days_available_for_category, time_on_category):
 			"""
 				When the objective is called, the solver makes the stage, state variables,
 				and decision variable available to it. The keyword argument names here
@@ -127,8 +157,8 @@ class SimpleDPTestFunction(unittest.TestCase):
 				[0, 4, 6, 8, 9, 10],
 			]
 
-			if time_on_category > days_spent_on_category:
-				return stage.parent_dp.exclusion_value  #
+			if time_on_category > days_available_for_category:  # can't spend more time than we have available
+				return stage.parent_dp.exclusion_value  # so exclude these options - sets to high positive or negative value
 			else:
 				return benefit_list[stage.number][time_on_category]
 
@@ -136,14 +166,16 @@ class SimpleDPTestFunction(unittest.TestCase):
 		dynamic_program = dypy.DynamicProgram(timestep_size=1, time_horizon=5,
 											  objective_function=objective_function, calculation_function=dypy.MAXIMIZE,
 											  prior=dypy.SimplePrior)
-		dynamic_program.exclusion_value = -1  # set it to -1 since we know nothing else will be negative here - lets us visualize arrays better
+
 		dynamic_program.decision_variable = decision_variable
 		dynamic_program.add_state_variable(state_variable)
 
 		# each category will be a stage, in effect - tell it to create all five stages as empty
 		dynamic_program.build_stages(name_prefix="Category")  # assigns names by default, but we can override them
-		stage_names = ["Core", "UI/UX", "Network", "Database", "API"]
-		for i, stage in enumerate(dynamic_program.stages):
-			dynamic_program.stages[i].name = stage_names[i]  # these need to match the order
+		stage_names = ["Core", "UI/UX", "Network", "Database", "API"]  # make a list of names in the same order they're used in our objective function
+		for i, stage in enumerate(dynamic_program.stages):  # and use it to set the value of .name for each stage
+			dynamic_program.stages[i].name = stage_names[i]
 
-		dynamic_program.run()
+		dynamic_program.run()  # run the dynamic program - results are logged to python logger `dypy` and decisions are set on each stage as .decision_amount
+
+		return dynamic_program

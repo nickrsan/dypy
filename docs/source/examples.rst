@@ -67,10 +67,10 @@ number of days of effort.
 
 .. code-block:: python
 
-    # we have 12 days available to us for studying
-    state_variable = dypy.StateVariable("Days Spent On Category", values=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-    # but we can only spend between 1 and 4 days studying for any single course
-    decision_variable = dypy.DecisionVariable("Time on Category", options=[1, 2, 3, 4, 5])
+    # we have 12 days available to us for work
+    state_variable = dypy.StateVariable("Days Spent On Category", values=range(1, 13))
+    # but we can only spend between 1 and 5 days sworking on a single category
+    decision_variable = dypy.DecisionVariable("Time on Category", options=range(1, 6))
 
     def objective_function(stage, days_spent_on_category, time_on_category):
         """
@@ -116,8 +116,8 @@ number of days of effort.
 
     # each category will be a stage, in effect - tell it to create all five stages as empty
     dynamic_program.build_stages(name_prefix="Category")  # assigns names by default, but we can override them
-    stage_names = ["Core", "UI/UX", "Network", "Database", "API"]
-    for i, stage in enumerate(dynamic_program.stages):
-        dynamic_program.stages[i].name = stage_names[i]  # these need to match the order
+    stage_names = ["Core", "UI/UX", "Network", "Database", "API"]  # make a list of names in the same order they're used in our objective function
+    for i, stage in enumerate(dynamic_program.stages):  # and use it to set the value of .name for each stage
+        dynamic_program.stages[i].name = stage_names[i]
 
-    dynamic_program.run()
+    dynamic_program.run()  # run the dynamic program - results are logged to python logger `dypy` and decisions are set on each stage as .decision_amount
