@@ -175,23 +175,23 @@ a master variable. Probabilities must be provided by the user.</p>
 # TODO: Missing plan for how we assign probabilities here - needs to be incorporated somewhere
 # TODO: Missing choice constraints (eg, minimim possible selection at stage ___ is ___)</p>
 <p>At that point, usage for the levee problem should be something like:</p>
-<p>``
-import support  # user’s extra code to support the objective function
-import dypy as dp</p>
-<p>objective_function = support.objective_function
-height_var = dp.StateVariable(“height”)
-flow_var = dp.StateVariable(“peak_flow”)
-variance_var = dp.StateVariable(“variance”)
-decision_var = dp.DecisionVariable()
-decision_var.related_state = height_var  # tell the decision variable which state it impacts</p>
-<dl class="docutils">
-<dt>dynamic_program = dp.DynamicProgram(objective_function=objective_function,</dt>
-<dd>state_variables=(height_var, flow_var, variance_var),
-decison_variable=decision_var)</dd>
-</dl>
-<p>dynamic_program.optimize()  # runs the backward recursion
-dynamic_program.get_optimal_values()  # runs the forward method to obtain choices
-``</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">support</span>  <span class="c1"># user&#39;s extra code to support the objective function</span>
+<span class="kn">import</span> <span class="nn">dypy</span> <span class="kn">as</span> <span class="nn">dp</span>
+
+<span class="n">objective_function</span> <span class="o">=</span> <span class="n">support</span><span class="o">.</span><span class="n">objective_function</span>
+<span class="n">height_var</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">StateVariable</span><span class="p">(</span><span class="s2">&quot;height&quot;</span><span class="p">)</span>
+<span class="n">flow_var</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">StateVariable</span><span class="p">(</span><span class="s2">&quot;peak_flow&quot;</span><span class="p">)</span>
+<span class="n">variance_var</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">StateVariable</span><span class="p">(</span><span class="s2">&quot;variance&quot;</span><span class="p">)</span>
+<span class="n">decision_var</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">DecisionVariable</span><span class="p">()</span>
+<span class="n">decision_var</span><span class="o">.</span><span class="n">related_state</span> <span class="o">=</span> <span class="n">height_var</span>  <span class="c1"># tell the decision variable which state it impacts</span>
+
+<span class="n">dynamic_program</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">DynamicProgram</span><span class="p">(</span><span class="n">objective_function</span><span class="o">=</span><span class="n">objective_function</span><span class="p">,</span>
+                                                                        <span class="n">state_variables</span><span class="o">=</span><span class="p">(</span><span class="n">height_var</span><span class="p">,</span> <span class="n">flow_var</span><span class="p">,</span> <span class="n">variance_var</span><span class="p">),</span>
+                                                                        <span class="n">decison_variable</span><span class="o">=</span><span class="n">decision_var</span><span class="p">)</span>
+<span class="n">dynamic_program</span><span class="o">.</span><span class="n">optimize</span><span class="p">()</span>  <span class="c1"># runs the backward recursion</span>
+<span class="n">dynamic_program</span><span class="o">.</span><span class="n">get_optimal_values</span><span class="p">()</span>  <span class="c1"># runs the forward method to obtain choices</span>
+</pre></div>
+</div>
 <dl class="class">
 <dt id="dypy.DynamicProgram">
 <em class="property">class </em><code class="descclassname">dypy.</code><code class="descname">DynamicProgram</code><span class="sig-paren">(</span><em>objective_function=&lt;function default_objective&gt;</em>, <em>timestep_size=None</em>, <em>time_horizon=None</em>, <em>discount_rate=0</em>, <em>state_variables=None</em>, <em>max_selections=None</em>, <em>selection_constraints=None</em>, <em>decision_variable=None</em>, <em>calculation_function=None</em>, <em>prior=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DynamicProgram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DynamicProgram" title="Permalink to this definition">¶</a></dt>
@@ -306,7 +306,24 @@ to False and run _setup_state_variables once all are added</li>
 <dt id="dypy.Prior">
 <em class="property">class </em><code class="descclassname">dypy.</code><code class="descname">Prior</code><span class="sig-paren">(</span><em>stage</em>, <em>data=None</em>, <em>matrix=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Prior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Prior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A class for applying future stage values back to the previous stage</p>
+<p>The Prior classes provide different ways of applying future stage values to earlier stages. SimplePrior
+includes an implementation that will work for most single variable problems, but which may not work for
+multi-variable problems. This class can be subclassed and have the apply method overridden to provide
+a different implementation. The apply method should return the new matrix</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>stage</strong> – The Stage object to attach this prior to - allows for different stages to have different prior
+application methods, if needed</li>
+<li><strong>data</strong> – The values from the future stage to apply back to the previous stage</li>
+<li><strong>matrix</strong> – The matrix (2D numpy array) for consideration in the current stage</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="dypy.Prior.apply">
 <code class="descname">apply</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Prior.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Prior.apply" title="Permalink to this definition">¶</a></dt>
@@ -386,44 +403,23 @@ the stage table and handling the prior can do so.</div></blockquote>
 <code class="descname">optimize</code><span class="sig-paren">(</span><em>prior=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Stage.optimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Stage.optimize" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div><p>This handles the actual backward DP calculation - assumes that the stage has a matrix that is built
-already with appropriate values.</p>
-<dl class="docutils">
-<dt>This method will handle migrating prior data back through. As notes:</dt>
-<dd><ul class="first last">
-<li><dl class="first docutils">
-<dt>We should be able to do a lot of this with numpy broadcasting. If we take the calculation function</dt>
-<dd><p class="first last">of each row in the previous stage, then broadcast it across this stage, that should do it.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>Need to think about where reducers fit in - if we have a probabilistic reducer, that can run after</dt>
-<dd><p class="first last">we do the broadcasting, I believe.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>Need to figure out how we want to handle both selection constraints, but also decision/state interactions</dt>
-<dd><p class="first">Right now, we can say which state a decision feeds back on - but what’s going through my head about that
-is: 1) Do we need that if we expect an objective function? I think we do because that determines</p>
-<blockquote class="last">
-<div><p>how we take values from the future and propogate them backward. This is where maybe we
+already with appropriate values. Calls the Prior object to apply future values back to the current stage,
+when necessary.</p>
+<ul class="simple">
+<li>Need to think about where reducers fit in</li>
+<li>Need to figure out how we want to handle both selection constraints, but also decision/state interactions</li>
+</ul>
+<p>Right now, we can say which state a decision feeds back on - but what’s going through my head about that
+is:</p>
+<p>1. Do we need that if we expect an objective function? I think we do because that determines
+how we take values from the future and propogate them backward. This is where maybe we
 might not actually be able to use numpy broadcasting? Or maybe we have to shift the array
 we’re broadcasting to align based on the best decision - not sure - need to think of how
-we’re going to handle that a bit more
-2) What about where there’s some limit imposed by decision var / state var interaction. For</p>
-<blockquote>
-<div><p>example, with the course studying test problem - in the last stage, the state variable
+we’re going to handle that a bit more</p>
+<p>2. What about where there’s some limit imposed by decision var / state var interaction. For
+example, with the course studying test problem - in the last stage, the state variable
 can’t be less than the decision variable. Maybe that’s always the case though, and is
 only a last stage problem?</p>
-</div></blockquote>
-</div></blockquote>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
 </div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -470,12 +466,34 @@ at 0 before solving.</div></blockquote>
 <dt id="dypy.variables.DecisionVariable">
 <em class="property">class </em><code class="descclassname">dypy.variables.</code><code class="descname">DecisionVariable</code><span class="sig-paren">(</span><em>name</em>, <em>variable_id=None</em>, <em>related_state=None</em>, <em>minimum=None</em>, <em>maximum=None</em>, <em>step_size=None</em>, <em>options=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#DecisionVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.DecisionVariable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<blockquote>
+<div>We’ll use this to manage the decision variable - we’ll need columns for each potential value here</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> – </li>
+<li><strong>related_state</strong> – the StateVariable object that this DecisionVariable directly feeds back on</li>
+<li><strong>variable_id</strong> – will be used as the kwarg name when passing the value of the state into the objective function.
+If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
+and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
+by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
+intact</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="dypy.variables.DecisionVariable.add_constraint">
 <code class="descname">add_constraint</code><span class="sig-paren">(</span><em>stage</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#DecisionVariable.add_constraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.DecisionVariable.add_constraint" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
-<div>Want to figure out a way here to store also whether this constraint is a minimum or a maximum value constraint.
-Need to think how we’d handle that behavior</div></blockquote>
+<div><p>Will be used to add constraints on how much or little of the decision variable is chosen in each stage.
+Not yet implemented</p>
+<p>Want to figure out a way here to store also whether this constraint is a minimum or a maximum value constraint.
+Need to think how we’d handle that behavior</p>
+</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -519,32 +537,54 @@ Need to think how we’d handle that behavior</div></blockquote>
 <dt id="dypy.variables.StateVariable">
 <em class="property">class </em><code class="descclassname">dypy.variables.</code><code class="descname">StateVariable</code><span class="sig-paren">(</span><em>name</em>, <em>values</em>, <em>variable_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#StateVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.StateVariable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Not sure what I’m going to do with this yet, but I think we’ll need it in order to have rows for interactions
-between multiple state variables.</p>
-<p>When we go to use all the state variables together, we’ll need to discretize them each, and then we’ll need to combine
-them to get all the rows in the table for each stage. Assuming we have some attribute .discretized that contains
-all the values for this state variable and that the DynamicProgram class has a list of these state variables called
-.state_variables, we can get all possible combinations for generating a row using <cite>itertools.product(*[var.discretized for var in self.state_variables])</cite>
-Note the asterisk at the front, which takes that list and expands it so each one is an individual argument to
-itertools.product</p>
-<p>We can then use this by taking the name attribute of the state variable and passing it as the kwarg to the objective
-function along with the discretized value. So then we have a DP class that accepts a list of variables, an objective
-function, and then a preprocessor function that handles aggregation of choices between filling in the matrix
-and use of minimization (a function that accepts the array and reduces the choices so that we can actually minimize
-or maximize. We need this to reduce multiple state variables to a single state variable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> – </li>
+<li><strong>values</strong> – </li>
+<li><strong>variable_id</strong> – will be used as the kwarg name when passing the value of the state into the objective function.
+If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
+and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
+by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
+intact</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="dypy.variables.check_variable_id">
 <code class="descclassname">dypy.variables.</code><code class="descname">check_variable_id</code><span class="sig-paren">(</span><em>name</em>, <em>variable_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#check_variable_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.check_variable_id" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><blockquote>
+<div>Given a full variable name and a current variable_id returns the keyword argument name for the variable.
+Designed for private within-package usage, but public for inspection and overriding.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> – Full name of a variable</li>
+<li><strong>variable_id</strong> – the current variable ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">sanitized new variable_id, suitable for usage in a Python keyword argument</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 <div class="section" id="module-dypy.reducers">
 <span id="dypy-state-variable-reducers"></span><h2>DyPy State Variable Reducers<a class="headerlink" href="#module-dypy.reducers" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="dypy.reducers.ProbabilisticReducer">
-<em class="property">class </em><code class="descclassname">dypy.reducers.</code><code class="descname">ProbabilisticReducer</code><a class="reference internal" href="_modules/dypy/reducers.html#ProbabilisticReducer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.reducers.ProbabilisticReducer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">dypy.reducers.</code><code class="descname">ProbabilisticReducer</code><span class="sig-paren">(</span><em>variable</em>, <em>stage</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/reducers.html#ProbabilisticReducer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.reducers.ProbabilisticReducer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#dypy.reducers.Reducer" title="dypy.reducers.Reducer"><code class="xref py py-class docutils literal notranslate"><span class="pre">dypy.reducers.Reducer</span></code></a></p>
 <p>Given a StateVariable to process (S), and a set of StateVariables to hold constant (Cs), reduces S for each
 combination of Cs by multiplying the objective values in the records for S by their probabilities and summing them.</p>
@@ -555,7 +595,7 @@ select a master variable, get all rows for it, multiply those rows by the probab
 
 <dl class="class">
 <dt id="dypy.reducers.Reducer">
-<em class="property">class </em><code class="descclassname">dypy.reducers.</code><code class="descname">Reducer</code><a class="reference internal" href="_modules/dypy/reducers.html#Reducer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.reducers.Reducer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">dypy.reducers.</code><code class="descname">Reducer</code><span class="sig-paren">(</span><em>variable</em>, <em>stage</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/reducers.html#Reducer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.reducers.Reducer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Reduces multiple state variables to a single state variable so we can just minimize</p>
 </dd></dl>
@@ -566,7 +606,19 @@ select a master variable, get all rows for it, multiply those rows by the probab
 <dd><p>Bases: <a class="reference internal" href="#dypy.reducers.Reducer" title="dypy.reducers.Reducer"><code class="xref py py-class docutils literal notranslate"><span class="pre">dypy.reducers.Reducer</span></code></a></p>
 <p>Given a StateVariable, reduces the table size by collapsing all other variables - can do this by min/max/mean/sum
 of all options.</p>
-<p>Saving implementation here until after we have a better sense for how the rest of this will be implemented</p>
+<p>Saving implementation here until after we have a better sense for how the rest of this will be implemented’</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>variable</strong> – </li>
+<li><strong>stage</strong> – </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>

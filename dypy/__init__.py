@@ -20,23 +20,24 @@
 
 	At that point, usage for the levee problem should be something like:
 
-	``
-	import support  # user's extra code to support the objective function
-	import dypy as dp
+	.. code-block:: python
 
-	objective_function = support.objective_function
-	height_var = dp.StateVariable("height")
-	flow_var = dp.StateVariable("peak_flow")
-	variance_var = dp.StateVariable("variance")
-	decision_var = dp.DecisionVariable()
-	decision_var.related_state = height_var  # tell the decision variable which state it impacts
+		import support  # user's extra code to support the objective function
+		import dypy as dp
 
-	dynamic_program = dp.DynamicProgram(objective_function=objective_function,
-										state_variables=(height_var, flow_var, variance_var),
-										decison_variable=decision_var)
-	dynamic_program.optimize()  # runs the backward recursion
-	dynamic_program.get_optimal_values()  # runs the forward method to obtain choices
-	``
+		objective_function = support.objective_function
+		height_var = dp.StateVariable("height")
+		flow_var = dp.StateVariable("peak_flow")
+		variance_var = dp.StateVariable("variance")
+		decision_var = dp.DecisionVariable()
+		decision_var.related_state = height_var  # tell the decision variable which state it impacts
+
+		dynamic_program = dp.DynamicProgram(objective_function=objective_function,
+											state_variables=(height_var, flow_var, variance_var),
+											decison_variable=decision_var)
+		dynamic_program.optimize()  # runs the backward recursion
+		dynamic_program.get_optimal_values()  # runs the forward method to obtain choices
+
 """
 
 import logging
@@ -341,24 +342,24 @@ class Stage(object):
 	def optimize(self, prior=None):
 		"""
 			This handles the actual backward DP calculation - assumes that the stage has a matrix that is built
-			already with appropriate values.
+			already with appropriate values. Calls the Prior object to apply future values back to the current stage,
+			when necessary.
 
-			This method will handle migrating prior data back through. As notes:
-				* We should be able to do a lot of this with numpy broadcasting. If we take the calculation function
-						of each row in the previous stage, then broadcast it across this stage, that should do it.
-				* Need to think about where reducers fit in - if we have a probabilistic reducer, that can run after
-						we do the broadcasting, I believe.
-				* Need to figure out how we want to handle both selection constraints, but also decision/state interactions
-						Right now, we can say which state a decision feeds back on - but what's going through my head about that
-						is: 1) Do we need that if we expect an objective function? I think we do because that determines
-							how we take values from the future and propogate them backward. This is where maybe we
-							might not actually be able to use numpy broadcasting? Or maybe we have to shift the array
-							we're broadcasting to align based on the best decision - not sure - need to think of how
-							we're going to handle that a bit more
-							2) What about where there's some limit imposed by decision var / state var interaction. For
-								example, with the course studying test problem - in the last stage, the state variable
-								can't be less than the decision variable. Maybe that's always the case though, and is
-								only a last stage problem?
+			* Need to think about where reducers fit in
+			* Need to figure out how we want to handle both selection constraints, but also decision/state interactions
+			Right now, we can say which state a decision feeds back on - but what's going through my head about that
+			is:
+
+			1. Do we need that if we expect an objective function? I think we do because that determines
+			how we take values from the future and propogate them backward. This is where maybe we
+			might not actually be able to use numpy broadcasting? Or maybe we have to shift the array
+			we're broadcasting to align based on the best decision - not sure - need to think of how
+			we're going to handle that a bit more
+
+			2. What about where there's some limit imposed by decision var / state var interaction. For
+			example, with the course studying test problem - in the last stage, the state variable
+			can't be less than the decision variable. Maybe that's always the case though, and is
+			only a last stage problem?
 
 		:param prior:
 		:return:
@@ -432,7 +433,16 @@ class Stage(object):
 
 class Prior(object):
 	"""
-		A class for applying future stage values back to the previous stage
+		The Prior classes provide different ways of applying future stage values to earlier stages. SimplePrior
+		includes an implementation that will work for most single variable problems, but which may not work for
+		multi-variable problems. This class can be subclassed and have the apply method overridden to provide
+		a different implementation. The apply method should return the new matrix
+
+		:param stage: The Stage object to attach this prior to - allows for different stages to have different prior
+			application methods, if needed
+		:param data: The values from the future stage to apply back to the previous stage
+		:param matrix: The matrix (2D numpy array) for consideration in the current stage
+
 	"""
 
 	def __init__(self, stage, data=None, matrix=None):

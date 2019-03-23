@@ -68,11 +68,11 @@ number of days of effort.
 .. code-block:: python
 
     # we have 12 days available to us for work
-    state_variable = dypy.StateVariable("Days Spent On Category", values=range(1, 13))
+    state_variable = dypy.StateVariable("Days Available for Category", values=range(1, 13))
     # but we can only spend between 1 and 5 days sworking on a single category
-    decision_variable = dypy.DecisionVariable("Time on Category", options=range(1, 6))
+    decision_variable = dypy.DecisionVariable("Time on Category", options=decision_options)
 
-    def objective_function(stage, days_spent_on_category, time_on_category):
+    def objective_function(stage, days_available_for_category, time_on_category):
         """
             When the objective is called, the solver makes the stage, state variables,
             and decision variable available to it. The keyword argument names here
@@ -101,8 +101,8 @@ number of days of effort.
             [0, 4, 6, 8, 9, 10],
         ]
 
-        if time_on_category > days_spent_on_category:
-            return stage.parent_dp.exclusion_value  #
+        if time_on_category > days_available_for_category:  # can't spend more time than we have available
+            return stage.parent_dp.exclusion_value  # so exclude these options - sets to high positive or negative value
         else:
             return benefit_list[stage.number][time_on_category]
 
@@ -110,7 +110,7 @@ number of days of effort.
     dynamic_program = dypy.DynamicProgram(timestep_size=1, time_horizon=5,
                                           objective_function=objective_function, calculation_function=dypy.MAXIMIZE,
                                           prior=dypy.SimplePrior)
-    dynamic_program.exclusion_value = -1  # set it to -1 since we know nothing else will be negative here - lets us visualize arrays better
+
     dynamic_program.decision_variable = decision_variable
     dynamic_program.add_state_variable(state_variable)
 

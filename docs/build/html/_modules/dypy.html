@@ -170,23 +170,24 @@
 
 <span class="sd">	At that point, usage for the levee problem should be something like:</span>
 
-<span class="sd">	``</span>
-<span class="sd">	import support  # user&#39;s extra code to support the objective function</span>
-<span class="sd">	import dypy as dp</span>
+<span class="sd">	.. code-block:: python</span>
 
-<span class="sd">	objective_function = support.objective_function</span>
-<span class="sd">	height_var = dp.StateVariable(&quot;height&quot;)</span>
-<span class="sd">	flow_var = dp.StateVariable(&quot;peak_flow&quot;)</span>
-<span class="sd">	variance_var = dp.StateVariable(&quot;variance&quot;)</span>
-<span class="sd">	decision_var = dp.DecisionVariable()</span>
-<span class="sd">	decision_var.related_state = height_var  # tell the decision variable which state it impacts</span>
+<span class="sd">		import support  # user&#39;s extra code to support the objective function</span>
+<span class="sd">		import dypy as dp</span>
 
-<span class="sd">	dynamic_program = dp.DynamicProgram(objective_function=objective_function,</span>
-<span class="sd">										state_variables=(height_var, flow_var, variance_var),</span>
-<span class="sd">										decison_variable=decision_var)</span>
-<span class="sd">	dynamic_program.optimize()  # runs the backward recursion</span>
-<span class="sd">	dynamic_program.get_optimal_values()  # runs the forward method to obtain choices</span>
-<span class="sd">	``</span>
+<span class="sd">		objective_function = support.objective_function</span>
+<span class="sd">		height_var = dp.StateVariable(&quot;height&quot;)</span>
+<span class="sd">		flow_var = dp.StateVariable(&quot;peak_flow&quot;)</span>
+<span class="sd">		variance_var = dp.StateVariable(&quot;variance&quot;)</span>
+<span class="sd">		decision_var = dp.DecisionVariable()</span>
+<span class="sd">		decision_var.related_state = height_var  # tell the decision variable which state it impacts</span>
+
+<span class="sd">		dynamic_program = dp.DynamicProgram(objective_function=objective_function,</span>
+<span class="sd">											state_variables=(height_var, flow_var, variance_var),</span>
+<span class="sd">											decison_variable=decision_var)</span>
+<span class="sd">		dynamic_program.optimize()  # runs the backward recursion</span>
+<span class="sd">		dynamic_program.get_optimal_values()  # runs the forward method to obtain choices</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -491,24 +492,24 @@
 <div class="viewcode-block" id="Stage.optimize"><a class="viewcode-back" href="../api.html#dypy.Stage.optimize">[docs]</a>	<span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">			This handles the actual backward DP calculation - assumes that the stage has a matrix that is built</span>
-<span class="sd">			already with appropriate values.</span>
+<span class="sd">			already with appropriate values. Calls the Prior object to apply future values back to the current stage,</span>
+<span class="sd">			when necessary.</span>
 
-<span class="sd">			This method will handle migrating prior data back through. As notes:</span>
-<span class="sd">				* We should be able to do a lot of this with numpy broadcasting. If we take the calculation function</span>
-<span class="sd">						of each row in the previous stage, then broadcast it across this stage, that should do it.</span>
-<span class="sd">				* Need to think about where reducers fit in - if we have a probabilistic reducer, that can run after</span>
-<span class="sd">						we do the broadcasting, I believe.</span>
-<span class="sd">				* Need to figure out how we want to handle both selection constraints, but also decision/state interactions</span>
-<span class="sd">						Right now, we can say which state a decision feeds back on - but what&#39;s going through my head about that</span>
-<span class="sd">						is: 1) Do we need that if we expect an objective function? I think we do because that determines</span>
-<span class="sd">							how we take values from the future and propogate them backward. This is where maybe we</span>
-<span class="sd">							might not actually be able to use numpy broadcasting? Or maybe we have to shift the array</span>
-<span class="sd">							we&#39;re broadcasting to align based on the best decision - not sure - need to think of how</span>
-<span class="sd">							we&#39;re going to handle that a bit more</span>
-<span class="sd">							2) What about where there&#39;s some limit imposed by decision var / state var interaction. For</span>
-<span class="sd">								example, with the course studying test problem - in the last stage, the state variable</span>
-<span class="sd">								can&#39;t be less than the decision variable. Maybe that&#39;s always the case though, and is</span>
-<span class="sd">								only a last stage problem?</span>
+<span class="sd">			* Need to think about where reducers fit in</span>
+<span class="sd">			* Need to figure out how we want to handle both selection constraints, but also decision/state interactions</span>
+<span class="sd">			Right now, we can say which state a decision feeds back on - but what&#39;s going through my head about that</span>
+<span class="sd">			is:</span>
+
+<span class="sd">			1. Do we need that if we expect an objective function? I think we do because that determines</span>
+<span class="sd">			how we take values from the future and propogate them backward. This is where maybe we</span>
+<span class="sd">			might not actually be able to use numpy broadcasting? Or maybe we have to shift the array</span>
+<span class="sd">			we&#39;re broadcasting to align based on the best decision - not sure - need to think of how</span>
+<span class="sd">			we&#39;re going to handle that a bit more</span>
+
+<span class="sd">			2. What about where there&#39;s some limit imposed by decision var / state var interaction. For</span>
+<span class="sd">			example, with the course studying test problem - in the last stage, the state variable</span>
+<span class="sd">			can&#39;t be less than the decision variable. Maybe that&#39;s always the case though, and is</span>
+<span class="sd">			only a last stage problem?</span>
 
 <span class="sd">		:param prior:</span>
 <span class="sd">		:return:</span>
@@ -582,7 +583,16 @@
 
 <div class="viewcode-block" id="Prior"><a class="viewcode-back" href="../api.html#dypy.Prior">[docs]</a><span class="k">class</span> <span class="nc">Prior</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 	<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		A class for applying future stage values back to the previous stage</span>
+<span class="sd">		The Prior classes provide different ways of applying future stage values to earlier stages. SimplePrior</span>
+<span class="sd">		includes an implementation that will work for most single variable problems, but which may not work for</span>
+<span class="sd">		multi-variable problems. This class can be subclassed and have the apply method overridden to provide</span>
+<span class="sd">		a different implementation. The apply method should return the new matrix</span>
+
+<span class="sd">		:param stage: The Stage object to attach this prior to - allows for different stages to have different prior</span>
+<span class="sd">			application methods, if needed</span>
+<span class="sd">		:param data: The values from the future stage to apply back to the previous stage</span>
+<span class="sd">		:param matrix: The matrix (2D numpy array) for consideration in the current stage</span>
+
 <span class="sd">	&quot;&quot;&quot;</span>
 
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">matrix</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>

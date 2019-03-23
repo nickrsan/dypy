@@ -237,11 +237,11 @@ of bugs you fix in each category as a function of time as follows:</p>
 and then build an objective function that provides the number of bugs closed for a given
 number of days of effort.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># we have 12 days available to us for work</span>
-<span class="n">state_variable</span> <span class="o">=</span> <span class="n">dypy</span><span class="o">.</span><span class="n">StateVariable</span><span class="p">(</span><span class="s2">&quot;Days Spent On Category&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">13</span><span class="p">))</span>
+<span class="n">state_variable</span> <span class="o">=</span> <span class="n">dypy</span><span class="o">.</span><span class="n">StateVariable</span><span class="p">(</span><span class="s2">&quot;Days Available for Category&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">13</span><span class="p">))</span>
 <span class="c1"># but we can only spend between 1 and 5 days sworking on a single category</span>
-<span class="n">decision_variable</span> <span class="o">=</span> <span class="n">dypy</span><span class="o">.</span><span class="n">DecisionVariable</span><span class="p">(</span><span class="s2">&quot;Time on Category&quot;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">decision_variable</span> <span class="o">=</span> <span class="n">dypy</span><span class="o">.</span><span class="n">DecisionVariable</span><span class="p">(</span><span class="s2">&quot;Time on Category&quot;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">decision_options</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">objective_function</span><span class="p">(</span><span class="n">stage</span><span class="p">,</span> <span class="n">days_spent_on_category</span><span class="p">,</span> <span class="n">time_on_category</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">objective_function</span><span class="p">(</span><span class="n">stage</span><span class="p">,</span> <span class="n">days_available_for_category</span><span class="p">,</span> <span class="n">time_on_category</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        When the objective is called, the solver makes the stage, state variables,</span>
 <span class="sd">        and decision variable available to it. The keyword argument names here</span>
@@ -270,8 +270,8 @@ number of days of effort.</p>
         <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
     <span class="p">]</span>
 
-    <span class="k">if</span> <span class="n">time_on_category</span> <span class="o">&gt;</span> <span class="n">days_spent_on_category</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">stage</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">exclusion_value</span>  <span class="c1">#</span>
+    <span class="k">if</span> <span class="n">time_on_category</span> <span class="o">&gt;</span> <span class="n">days_available_for_category</span><span class="p">:</span>  <span class="c1"># can&#39;t spend more time than we have available</span>
+        <span class="k">return</span> <span class="n">stage</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">exclusion_value</span>  <span class="c1"># so exclude these options - sets to high positive or negative value</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">benefit_list</span><span class="p">[</span><span class="n">stage</span><span class="o">.</span><span class="n">number</span><span class="p">][</span><span class="n">time_on_category</span><span class="p">]</span>
 
@@ -279,7 +279,7 @@ number of days of effort.</p>
 <span class="n">dynamic_program</span> <span class="o">=</span> <span class="n">dypy</span><span class="o">.</span><span class="n">DynamicProgram</span><span class="p">(</span><span class="n">timestep_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">time_horizon</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
                                       <span class="n">objective_function</span><span class="o">=</span><span class="n">objective_function</span><span class="p">,</span> <span class="n">calculation_function</span><span class="o">=</span><span class="n">dypy</span><span class="o">.</span><span class="n">MAXIMIZE</span><span class="p">,</span>
                                       <span class="n">prior</span><span class="o">=</span><span class="n">dypy</span><span class="o">.</span><span class="n">SimplePrior</span><span class="p">)</span>
-<span class="n">dynamic_program</span><span class="o">.</span><span class="n">exclusion_value</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>  <span class="c1"># set it to -1 since we know nothing else will be negative here - lets us visualize arrays better</span>
+
 <span class="n">dynamic_program</span><span class="o">.</span><span class="n">decision_variable</span> <span class="o">=</span> <span class="n">decision_variable</span>
 <span class="n">dynamic_program</span><span class="o">.</span><span class="n">add_state_variable</span><span class="p">(</span><span class="n">state_variable</span><span class="p">)</span>
 
