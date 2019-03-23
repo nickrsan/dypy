@@ -2,11 +2,14 @@ import logging
 
 log = logging.getLogger("dypy.reducers")
 
+
 class Reducer(object):
 	"""
 		Reduces multiple state variables to a single state variable so we can just minimize
 	"""
-	pass
+	def __init__(self, variable, stage):
+		self.variable = variable  # reference to StateVariable object
+		self.stage = stage  # reference to Stage object
 
 
 class VariableReducer(Reducer):
@@ -14,12 +17,12 @@ class VariableReducer(Reducer):
 		Given a StateVariable, reduces the table size by collapsing all other variables - can do this by min/max/mean/sum
 		of all options.
 
-		Saving implementation here until after we have a better sense for how the rest of this will be implemented
-	"""
-	def __init__(self, variable, stage):
-		self.variable = variable  # reference to StateVariable object
-		self.stage = stage  # reference to Stage object
+		Saving implementation here until after we have a better sense for how the rest of this will be implemented'
 
+		:param variable:
+		:param stage:
+	"""
+	pass
 
 class ProbabilisticReducer(Reducer):
 	"""

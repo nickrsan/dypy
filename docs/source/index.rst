@@ -8,7 +8,8 @@ DyPy documentation
 
 DyPy is a generic Python backward dynamic programming solver focused on ease and flexibility.
 It tries to provide simple, and easy to use defaults that can be overridden to build larger
-and more complex dynamic programs.
+and more complex dynamic programs. Further, it is permissively licensed and is a full Python
+package with (at least some) tests to ensure integrity of solutions.
 
 DyPy is still very new and caution should be exercised in using it. The code base is still seeing large changes
 which may or may not break existing functionality. It currently is tested against a few small problems, but those

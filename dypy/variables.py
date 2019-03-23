@@ -1,31 +1,15 @@
 import re
+import logging
 
 import numpy
 
 VARIABLE_ID_VALIDATION_PATTERN = re.compile('[^a-zA-Z0-9_]|_')
 VARIABLE_NUMERAL_BEGINNING_PATTERN = re.compile('^[0-9]')
 
+log = logging.getLogger("dypy.variables")
+
 class StateVariable(object):
 	"""
-		Not sure what I'm going to do with this yet, but I think we'll need it in order to have rows for interactions
-		between multiple state variables.
-
-		When we go to use all the state variables together, we'll need to discretize them each, and then we'll need to combine
-		them to get all the rows in the table for each stage. Assuming we have some attribute .discretized that contains
-		all the values for this state variable and that the DynamicProgram class has a list of these state variables called
-		.state_variables, we can get all possible combinations for generating a row using `itertools.product(*[var.discretized for var in self.state_variables])`
-		Note the asterisk at the front, which takes that list and expands it so each one is an individual argument to
-		itertools.product
-
-		We can then use this by taking the name attribute of the state variable and passing it as the kwarg to the objective
-		function along with the discretized value. So then we have a DP class that accepts a list of variables, an objective
-		function, and then a preprocessor function that handles aggregation of choices between filling in the matrix
-		and use of minimization (a function that accepts the array and reduces the choices so that we can actually minimize
-		or maximize. We need this to reduce multiple state variables to a single state variable.
-	"""
-
-	def __init__(self, name, values, variable_id=None):
-		"""
 
 		:param name:
 		:param values:
@@ -34,7 +18,9 @@ class StateVariable(object):
 				and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
 				by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
 				intact
-		"""
+	"""
+
+	def __init__(self, name, values, variable_id=None):
 		self.name = name
 		self.values = values
 
@@ -44,17 +30,19 @@ class StateVariable(object):
 
 
 class DecisionVariable(object):
+	"""
+		We'll use this to manage the decision variable - we'll need columns for each potential value here
+
+	:param name:
+	:param related_state: the StateVariable object that this DecisionVariable directly feeds back on
+	:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.
+			If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
+			and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
+			by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
+			intact
+	"""
+
 	def __init__(self, name, variable_id=None, related_state=None, minimum=None, maximum=None, step_size=None, options=None):
-		"""
-			We'll use this to manage the decision variable - we'll need columns for each potential value here
-		:param name:
-		:param related_state: the StateVariable object that this DecisionVariable directly feeds back on
-		:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.
-				If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
-				and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
-				by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
-				intact
-		"""
 		self.name = name
 		self.variable_id = check_variable_id(name=name, variable_id=variable_id)
 		self.related_state = related_state
@@ -126,16 +114,28 @@ class DecisionVariable(object):
 
 	def add_constraint(self, stage, value):
 		"""
+			Will be used to add constraints on how much or little of the decision variable is chosen in each stage.
+			Not yet implemented
+
 			Want to figure out a way here to store also whether this constraint is a minimum or a maximum value constraint.
 			Need to think how we'd handle that behavior
+
 		:param stage:
 		:param value:
 		:return:
 		"""
-		pass
+		raise NotImplementedError("Decision constraints aren't yet implemented. Sorry!")
 
 
 def check_variable_id(name, variable_id):
+	"""
+		Given a full variable name and a current variable_id returns the keyword argument name for the variable.
+		Designed for private within-package usage, but public for inspection and overriding.
+
+	:param name: Full name of a variable
+	:param variable_id: the current variable ID
+	:return: sanitized new variable_id, suitable for usage in a Python keyword argument
+	"""
 	if variable_id is None:
 		variable_id = name.lower()
 
