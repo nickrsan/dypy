@@ -158,21 +158,25 @@
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#G"><strong>G</strong></a>
+ | <a href="#M"><strong>M</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
+ | <a href="#V"><strong>V</strong></a>
  
 </div>
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#dypy.DynamicProgram.add_stage">add_stage() (dypy.DynamicProgram method)</a>
+      <li><a href="api.html#dypy.variables.DecisionVariable.add_constraint">add_constraint() (dypy.variables.DecisionVariable method)</a>
 </li>
-      <li><a href="api.html#dypy.DynamicProgram.add_state_variable">add_state_variable() (dypy.DynamicProgram method)</a>
+      <li><a href="api.html#dypy.DynamicProgram.add_stage">add_stage() (dypy.DynamicProgram method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dypy.DynamicProgram.add_state_variable">add_state_variable() (dypy.DynamicProgram method)</a>
+</li>
       <li><a href="api.html#dypy.Prior.apply">apply() (dypy.Prior method)</a>
 
       <ul>
@@ -197,6 +201,10 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dypy.variables.check_variable_id">check_variable_id() (in module dypy.variables)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#dypy.Stage.create_prior_handler">create_prior_handler() (dypy.Stage method)</a>
 </li>
   </ul></td>
@@ -205,13 +213,19 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dypy.variables.DecisionVariable">DecisionVariable (class in dypy.variables)</a>
+</li>
       <li><a href="api.html#dypy.default_objective">default_objective() (in module dypy)</a>
+</li>
+      <li><a href="api.html#dypy.DynamicProgram">DynamicProgram (class in dypy)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#dypy.DynamicProgram">DynamicProgram (class in dypy)</a>
-</li>
       <li><a href="api.html#module-dypy">dypy (module)</a>
+</li>
+      <li><a href="api.html#module-dypy.reducers">dypy.reducers (module)</a>
+</li>
+      <li><a href="api.html#module-dypy.variables">dypy.variables (module)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -232,10 +246,26 @@
   </ul></td>
 </tr></table>
 
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dypy.variables.DecisionVariable.maximum">maximum (dypy.variables.DecisionVariable attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dypy.variables.DecisionVariable.minimum">minimum (dypy.variables.DecisionVariable attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#dypy.Stage.optimize">optimize() (dypy.Stage method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dypy.variables.DecisionVariable.options">options (dypy.variables.DecisionVariable attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -246,10 +276,18 @@
       <li><a href="api.html#dypy.Prior">Prior (class in dypy)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dypy.reducers.ProbabilisticReducer">ProbabilisticReducer (class in dypy.reducers)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dypy.reducers.Reducer">Reducer (class in dypy.reducers)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#dypy.DynamicProgram.run">run() (dypy.DynamicProgram method)</a>
 </li>
@@ -261,9 +299,21 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#dypy.SimplePrior">SimplePrior (class in dypy)</a>
 </li>
+      <li><a href="api.html#dypy.Stage">Stage (class in dypy)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#dypy.Stage">Stage (class in dypy)</a>
+      <li><a href="api.html#dypy.variables.StateVariable">StateVariable (class in dypy.variables)</a>
+</li>
+      <li><a href="api.html#dypy.variables.DecisionVariable.step_size">step_size (dypy.variables.DecisionVariable attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#dypy.reducers.VariableReducer">VariableReducer (class in dypy.reducers)</a>
 </li>
   </ul></td>
 </tr></table>

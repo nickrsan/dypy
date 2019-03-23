@@ -8,7 +8,9 @@ DyPy's goal is to provide an interface to backward dynamic programming that supp
 
 In support of these goals, this document describes the core classes and how you might use them to build a dynamic program
 with DyPy. While it outlines the core classes, and some of this document will be redundant to the API documentation, usage
-options are included here to support reuse and extension of the package.
+options are included here to support reuse and extension of the package. Specific usage information will be included
+in the :ref:`api` section. Note that many elements of the API that are otherwise not needed to use the package
+are included as documented, public methods in order to aid subclassing and development of more complex models.
 
 DynamicProgram
 --------------
@@ -17,7 +19,9 @@ and attaching the classes below to it in ways that tell it how to solve your pro
 for DyPy is that it should be able to handle problems with multiple state variables
 
 DynamicProgram manages all data and the flow of the optimization. By default, it will build all the stages and manage their
-tables, but this part of the process can be customized as well (see `Stage`_ below for more)
+tables, but this part of the process can be customized as well (see `Stage`_ below for more).
+
+API documentation for this class is here: :class:`dypy.DynamicProgram`
 
 Objective Functions
 +++++++++++++++++++

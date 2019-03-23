@@ -172,14 +172,17 @@
 </ol>
 <p>In support of these goals, this document describes the core classes and how you might use them to build a dynamic program
 with DyPy. While it outlines the core classes, and some of this document will be redundant to the API documentation, usage
-options are included here to support reuse and extension of the package.</p>
+options are included here to support reuse and extension of the package. Specific usage information will be included
+in the <span class="xref std std-ref">api</span> section. Note that many elements of the API that are otherwise not needed to use the package
+are included as documented, public methods in order to aid subclassing and development of more complex models.</p>
 <div class="section" id="dynamicprogram">
 <h2>DynamicProgram<a class="headerlink" href="#dynamicprogram" title="Permalink to this headline">¶</a></h2>
 <p>The Dynamic Program class is the core of DyPy. Each problem you wish to solve will involve creating an instance of this class
 and attaching the classes below to it in ways that tell it how to solve your problem. One important design consideration
 for DyPy is that it should be able to handle problems with multiple state variables</p>
 <p>DynamicProgram manages all data and the flow of the optimization. By default, it will build all the stages and manage their
-tables, but this part of the process can be customized as well (see <a class="reference internal" href="#stage">Stage</a> below for more)</p>
+tables, but this part of the process can be customized as well (see <a class="reference internal" href="#stage">Stage</a> below for more).</p>
+<p>API documentation for this class is here: <a class="reference internal" href="api.html#dypy.DynamicProgram" title="dypy.DynamicProgram"><code class="xref py py-class docutils literal notranslate"><span class="pre">dypy.DynamicProgram</span></code></a></p>
 <div class="section" id="objective-functions">
 <h3>Objective Functions<a class="headerlink" href="#objective-functions" title="Permalink to this headline">¶</a></h3>
 <p>The objective function will do some of the heavy lifting for your dynamic program, and must be created by the user for each

@@ -43,7 +43,10 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
+	'sphinx.ext.autosectionlabel'
 ]
+
+autosectionlabel_prefix_document = True  # labels will be in the form document:heading
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

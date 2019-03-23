@@ -85,7 +85,12 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="conceptual_overview.html">DyPy Core Concepts and Classes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">DyPy Examples</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">DyPy API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">DyPy API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-dypy">DyPy Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-dypy.variables">DyPy Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-dypy.reducers">DyPy State Variable Reducers</a></li>
+</ul>
+</li>
 </ul>
 
             
@@ -153,7 +158,9 @@
   <div class="section" id="dypy-api">
 <span id="code"></span><h1>DyPy API<a class="headerlink" href="#dypy-api" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="#module-dypy" title="dypy"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dypy</span></code></a> Package</p>
-<span class="target" id="module-dypy"></span><p>Dynamic Program class - implements only backward dynamic programming.
+<div class="section" id="module-dypy">
+<span id="dypy-core"></span><h2>DyPy Core<a class="headerlink" href="#module-dypy" title="Permalink to this headline">¶</a></h2>
+<p>Dynamic Program class - implements only backward dynamic programming.
 Ideal usage is to have an objective function defined by the user, however they’d like.</p>
 <p>The user defines as many StateVariable instances as they have state variables in their DP and they define
 a DecisionVariable. The objective function should be prepared to take arguments with keyword values for each of
@@ -163,8 +170,12 @@ will reduce the number of state variables to one so that we can get a single F* 
 This is a class Reducer with a defined interface, and can then be extended. For our levee problem, we have a
 ProbabilisticReducer which keeps track of the probability of each set of state variables and can collapse by
 a master variable. Probabilities must be provided by the user.</p>
+<p># TODO: Make sure to check how we can make the decision variable properly interact with the state variable - thinking
+# of making sure that the decision variable adds to the correct state variable items
+# TODO: Missing plan for how we assign probabilities here - needs to be incorporated somewhere
+# TODO: Missing choice constraints (eg, minimim possible selection at stage ___ is ___)</p>
 <p>At that point, usage for the levee problem should be something like:</p>
-<p><a href="#id1"><span class="problematic" id="id2">``</span></a>`
+<p>``
 import support  # user’s extra code to support the objective function
 import dypy as dp</p>
 <p>objective_function = support.objective_function
@@ -174,34 +185,79 @@ variance_var = dp.StateVariable(“variance”)
 decision_var = dp.DecisionVariable()
 decision_var.related_state = height_var  # tell the decision variable which state it impacts</p>
 <dl class="docutils">
-<dt># TODO: Make sure to check how we can make the decision variable properly interact with the state variable - thinking</dt>
-<dd># of making sure that the decision variable adds to the correct state variable items</dd>
-</dl>
-<p># TODO: Missing plan for how we assign probabilities here - needs to be incorporated somewhere
-# TODO: Missing choice constraints (eg, min selection at stage ___ is ___)</p>
-<dl class="docutils">
 <dt>dynamic_program = dp.DynamicProgram(objective_function=objective_function,</dt>
 <dd>state_variables=(height_var, flow_var, variance_var),
 decison_variable=decision_var)</dd>
 </dl>
 <p>dynamic_program.optimize()  # runs the backward recursion
 dynamic_program.get_optimal_values()  # runs the forward method to obtain choices
-<a href="#id3"><span class="problematic" id="id4">``</span></a><a href="#id5"><span class="problematic" id="id6">`</span></a></p>
+``</p>
 <dl class="class">
 <dt id="dypy.DynamicProgram">
 <em class="property">class </em><code class="descclassname">dypy.</code><code class="descname">DynamicProgram</code><span class="sig-paren">(</span><em>objective_function=&lt;function default_objective&gt;</em>, <em>timestep_size=None</em>, <em>time_horizon=None</em>, <em>discount_rate=0</em>, <em>state_variables=None</em>, <em>max_selections=None</em>, <em>selection_constraints=None</em>, <em>decision_variable=None</em>, <em>calculation_function=None</em>, <em>prior=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DynamicProgram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DynamicProgram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This object actually runs the DP - doesn’t currently support multiple decision variables or probabilities.</p>
-<p>Currently designed to only handle backward DPs</p>
+<p>Currently designed to only handle backward DPs.</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd>DynamicProgram.stages   list of Stage objects</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>objective_function</strong> – What function provides values to populate each cell in each stage? Not required if
+you build your own stages with their own values</li>
+<li><strong>selection_constraints</strong> – Is there a minimum value that must be achieved in the selection?
+If so, this should be a list with the required quantity at each time step</li>
+<li><strong>decision_variables</strong> – list of DecisionVariable objects</li>
+<li><strong>discount_rate</strong> – give the discount rate in “annual” units. Though timesteps don’t need to be in years, think
+of the discount rate as applying per smallest possible timestep size, so if your timestep_size is 40, then
+your discount rate will be transformed to cover 40 timesteps (compounding).</li>
+<li><strong>calculation_function</strong> – What function are we using to evaluate? Basically, is this a maximization (benefit)
+or minimization (costs) setup. Provide the function object for max or min. Provide the actual <cite>min</cite> or <a href="#id1"><span class="problematic" id="id2">`</span></a>max functions
+(don’t run it, just the name) or if convenient, use the shortcuts dp.MINIMIZE or dp.MAXIMIZE</li>
+<li><strong>max_selections</strong> – Up to what value of the state variable can we use to make our decision? If not provided,
+all values of the state variable will be allowed</li>
+<li><strong>prior</strong> – Which class should be used to handle priors (best values from future stages) - SimplePrior is best in many
+cases, but may not apply everywhere and will be slow for large tables. Just provide the class object, not an instance.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="dypy.DynamicProgram.add_stage">
 <code class="descname">add_stage</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DynamicProgram.add_stage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DynamicProgram.add_stage" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><blockquote>
+<div><p>Adds an empty stage to this DynamicProgram, tied to the currently set DecisionVariable and Prior classes
+associated with this DynamicProgram. Gives the stage the name provided as a parameter, usually generated
+automatically by the DP.</p>
+<p>This method is called automatically by default, but is exposed as a public method primarily so you can
+control its usage if you desire, or so you can override its behavior in a subclass (such as if you wish
+to manually handle Stage creation in order to control the process for a specific dynamic programming problem).</p>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – The name associated with the stage. Generated by the name prefix and the stage ID when called via build_stages</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="dypy.DynamicProgram.add_state_variable">
 <code class="descname">add_state_variable</code><span class="sig-paren">(</span><em>variable</em>, <em>setup_state=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DynamicProgram.add_state_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DynamicProgram.add_state_variable" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
+<dd><blockquote>
+<div>Adds a state variable object to this dynamic program - automatically sets up the dynamic program
+to run with the new state variable when setup_state is True. Otherwise waits for you to call it manually.
+If you provide your state variables at DynamicProgram creation, then this method does not need to be called.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
@@ -407,6 +463,113 @@ at 0 before solving.</div></blockquote>
 </table>
 </dd></dl>
 
+</div>
+<div class="section" id="module-dypy.variables">
+<span id="dypy-variables"></span><h2>DyPy Variables<a class="headerlink" href="#module-dypy.variables" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dypy.variables.DecisionVariable">
+<em class="property">class </em><code class="descclassname">dypy.variables.</code><code class="descname">DecisionVariable</code><span class="sig-paren">(</span><em>name</em>, <em>variable_id=None</em>, <em>related_state=None</em>, <em>minimum=None</em>, <em>maximum=None</em>, <em>step_size=None</em>, <em>options=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#DecisionVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.DecisionVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="dypy.variables.DecisionVariable.add_constraint">
+<code class="descname">add_constraint</code><span class="sig-paren">(</span><em>stage</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#DecisionVariable.add_constraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.DecisionVariable.add_constraint" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Want to figure out a way here to store also whether this constraint is a minimum or a maximum value constraint.
+Need to think how we’d handle that behavior</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>stage</strong> – </li>
+<li><strong>value</strong> – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="dypy.variables.DecisionVariable.maximum">
+<code class="descname">maximum</code><a class="headerlink" href="#dypy.variables.DecisionVariable.maximum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dypy.variables.DecisionVariable.minimum">
+<code class="descname">minimum</code><a class="headerlink" href="#dypy.variables.DecisionVariable.minimum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dypy.variables.DecisionVariable.options">
+<code class="descname">options</code><a class="headerlink" href="#dypy.variables.DecisionVariable.options" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dypy.variables.DecisionVariable.step_size">
+<code class="descname">step_size</code><a class="headerlink" href="#dypy.variables.DecisionVariable.step_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="dypy.variables.StateVariable">
+<em class="property">class </em><code class="descclassname">dypy.variables.</code><code class="descname">StateVariable</code><span class="sig-paren">(</span><em>name</em>, <em>values</em>, <em>variable_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#StateVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.StateVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Not sure what I’m going to do with this yet, but I think we’ll need it in order to have rows for interactions
+between multiple state variables.</p>
+<p>When we go to use all the state variables together, we’ll need to discretize them each, and then we’ll need to combine
+them to get all the rows in the table for each stage. Assuming we have some attribute .discretized that contains
+all the values for this state variable and that the DynamicProgram class has a list of these state variables called
+.state_variables, we can get all possible combinations for generating a row using <cite>itertools.product(*[var.discretized for var in self.state_variables])</cite>
+Note the asterisk at the front, which takes that list and expands it so each one is an individual argument to
+itertools.product</p>
+<p>We can then use this by taking the name attribute of the state variable and passing it as the kwarg to the objective
+function along with the discretized value. So then we have a DP class that accepts a list of variables, an objective
+function, and then a preprocessor function that handles aggregation of choices between filling in the matrix
+and use of minimization (a function that accepts the array and reduces the choices so that we can actually minimize
+or maximize. We need this to reduce multiple state variables to a single state variable.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dypy.variables.check_variable_id">
+<code class="descclassname">dypy.variables.</code><code class="descname">check_variable_id</code><span class="sig-paren">(</span><em>name</em>, <em>variable_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#check_variable_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.check_variable_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-dypy.reducers">
+<span id="dypy-state-variable-reducers"></span><h2>DyPy State Variable Reducers<a class="headerlink" href="#module-dypy.reducers" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dypy.reducers.ProbabilisticReducer">
+<em class="property">class </em><code class="descclassname">dypy.reducers.</code><code class="descname">ProbabilisticReducer</code><a class="reference internal" href="_modules/dypy/reducers.html#ProbabilisticReducer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.reducers.ProbabilisticReducer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dypy.reducers.Reducer" title="dypy.reducers.Reducer"><code class="xref py py-class docutils literal notranslate"><span class="pre">dypy.reducers.Reducer</span></code></a></p>
+<p>Given a StateVariable to process (S), and a set of StateVariables to hold constant (Cs), reduces S for each
+combination of Cs by multiplying the objective values in the records for S by their probabilities and summing them.</p>
+<p>We should be able to actually just make this have a single column for probabilities so that we can do the same
+thing we planned to do for the variable reducer and just (ignoring the first paragraph of this docstring)
+select a master variable, get all rows for it, multiply those rows by the probability field, and sum them up.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dypy.reducers.Reducer">
+<em class="property">class </em><code class="descclassname">dypy.reducers.</code><code class="descname">Reducer</code><a class="reference internal" href="_modules/dypy/reducers.html#Reducer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.reducers.Reducer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Reduces multiple state variables to a single state variable so we can just minimize</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dypy.reducers.VariableReducer">
+<em class="property">class </em><code class="descclassname">dypy.reducers.</code><code class="descname">VariableReducer</code><span class="sig-paren">(</span><em>variable</em>, <em>stage</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/reducers.html#VariableReducer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.reducers.VariableReducer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dypy.reducers.Reducer" title="dypy.reducers.Reducer"><code class="xref py py-class docutils literal notranslate"><span class="pre">dypy.reducers.Reducer</span></code></a></p>
+<p>Given a StateVariable, reduces the table size by collapsing all other variables - can do this by min/max/mean/sum
+of all options.</p>
+<p>Saving implementation here until after we have a better sense for how the rest of this will be implemented</p>
+</dd></dl>
+
+</div>
 </div>
 
 
