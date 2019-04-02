@@ -106,6 +106,8 @@ class StateVariable(AbstractVariable):
 		else:
 			self.initial_state = None
 
+		self.current_state = self.initial_state
+
 		if six.PY3:
 			super().__init__(*args, **kwargs)
 		elif six.PY2:
@@ -126,7 +128,11 @@ class DecisionVariable(AbstractVariable):
 	"""
 
 	def __init__(self, *args, **kwargs):
-		self.related_state = None
+		if 'related_state' in kwargs:
+			self.related_state = kwargs['related_state']
+		else:
+			self.related_state = None
+
 		self.constraints = {}
 
 		if six.PY3:

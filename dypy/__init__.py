@@ -449,6 +449,13 @@ class Stage(object):
 		self.future_value_of_decision = best_option
 		log.info("{} - Decision Amount at Stage: {}, Total Cost/Benefit: {}".format(self.name, self.decision_amount, best_option))
 
+		# TODO: Should make the value of each state at the time of decision in each stage accessible on stage objects
+		if self.decision_variable.related_state is not None:  # update the state of the state variable to match the new decision
+			if self.decision_variable.related_state.current_state is None:
+				self.decision_variable.related_state.current_state = self.decision_amount
+			else:
+				self.decision_variable.related_state.current_state += self.decision_amount
+
 		if self.next_stage:
 			self.next_stage.get_optimal_values(prior=self.decision_amount + prior)
 
