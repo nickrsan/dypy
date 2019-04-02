@@ -43,6 +43,7 @@
 import logging
 import itertools
 
+import six
 import numpy
 
 from .reducers import Reducer, ProbabilisticReducer, VariableReducer
@@ -115,9 +116,9 @@ class DynamicProgram(object):
 
 		self._all_states = None
 		self._state_keys = None
-		if not state_variables:
-			self.state_variables = []
-		else:
+
+		self.state_variables = list()
+		if state_variables:
 			for variable in state_variables:
 				self.add_state_variable(variable, setup_state=False)
 			self._setup_state_variables()  # set up the state variables for the DP once all are added
@@ -250,7 +251,7 @@ class DynamicProgram(object):
 	def run(self):
 
 		if self._is_default():
-			raise ValueError("Objective function must be provided before running DP. Either provide it as an argument"
+			raise ValueError("Objective function must be provided before running DP. Either provide it as an argument "
 							 "at creation, or set the .objective_function parameter to a function object (*not* a function result)")
 
 		if not self.decision_variable or len(self.state_variables) == 0:
@@ -308,7 +309,12 @@ class Stage(object):
 
 	def create_prior_handler(self):
 		if self.prior_handler_class is not None:
-			self.prior_handler = self.prior_handler_class(stage=self)
+			if isinstance(self.prior_handler_class, Prior):  # if it's already an instantiated object
+				self.prior_handler = self.prior_handler_class  # set the item
+				self.prior_handler.stage = self  # tell it that it applies to this item
+				self.prior_handler_class = self.prior_handler.__class__  # and set the class
+			else:
+				self.prior_handler = self.prior_handler_class(stage=self)  # otherwise, create it
 
 	def build(self):
 		"""
@@ -322,16 +328,16 @@ class Stage(object):
 
 		states = self.parent_dp._all_states
 		state_kwargs = self.parent_dp._state_keys
-		decisions = self.decision_variable.options
+		decisions = self.decision_variable.values
 		self.matrix = numpy.zeros((len(states), len(decisions)))
 
 		for row_id, state_values in enumerate(states):
 			for column_id, decision_value in enumerate(decisions):
 				state_data = dict(zip(state_kwargs, state_values))  # build the kwarg pairs into a dictionary we can pass into the objective function
 				decision_data = {self.decision_variable.variable_id: decision_value}
-				self.matrix[row_id][column_id] = self.parent_dp.objective_function(stage=self,
-																					**support.merge_dicts(state_data,
+				objective_value = self.parent_dp.objective_function(stage=self,	**support.merge_dicts(state_data,
 																										  decision_data))
+				self.matrix[row_id][column_id] = objective_value  # have this on a separate line for debugging
 
 	def __str__(self):
 		return self.name
@@ -423,7 +429,7 @@ class Stage(object):
 		#if self.selection_constraints:
 		#	number_of_items = max([0, column_of_best - self.selection_constraints[self.number]])  # take the max with 0 - if it's negative, it should be 0
 		#else:
-		self.decision_amount = self.parent_dp.decision_variable.options[column_of_best]
+		self.decision_amount = self.parent_dp.decision_variable.values[column_of_best]
 		self.future_value_of_decision = best_option
 		log.info("{} - Decision Amount at Stage: {}, Total Cost/Benefit: {}".format(self.name, self.decision_amount, best_option))
 
@@ -442,6 +448,7 @@ class Prior(object):
 			application methods, if needed
 		:param data: The values from the future stage to apply back to the previous stage
 		:param matrix: The matrix (2D numpy array) for consideration in the current stage
+		:param transformation: A function - can be used by subclasses to transform values prior to applying them
 
 	"""
 
@@ -449,6 +456,14 @@ class Prior(object):
 		self.data = data
 		self.matrix = matrix
 		self.parent_stage = stage
+
+		self._transformation = lambda x: x  # default transformation just returns the value
+		self._transformation_kwargs = dict()
+
+		self.setUp()
+
+	def setUp(self):
+		pass
 
 	def exists(self):
 		if self.data is not None:
@@ -470,6 +485,7 @@ class SimplePrior(Prior):
 		the linked_state attribute on the decision variables to understand how to apply priors. This functionality
 		may need to be re-engineered or expanded.
 	"""
+
 	def apply(self):
 		for row_index, row_value in reversed(list(enumerate(self.matrix))):  # go from bottom to top because we modify the items a row below as we go, but need their valus to be intact, so starting at the bottom allows us to use clean values for calculations
 			for column_index, column_value in reversed(list(enumerate(row_value))):
@@ -484,7 +500,18 @@ class SimplePrior(Prior):
 
 				try:
 					prior_value = self.data[row_index-column_index]
+					prior_value = self._transformation(prior_value, **self._transformation_kwargs)
 					self.matrix[row_index+1][column_index] = stage_value + prior_value
 				except IndexError:
 					continue
 		return self.matrix
+
+
+class DiscountedSimplePrior(SimplePrior):
+	def __init__(self, *args, **kwargs):
+
+
+		if six.PY3:
+			super().__init__(*args, **kwargs)
+		elif six.PY2:
+			super(StateVariable, self).__init__(*args, **kwargs)

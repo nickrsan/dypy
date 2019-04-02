@@ -1,6 +1,8 @@
 import re
 import logging
 
+import six
+
 import numpy
 
 VARIABLE_ID_VALIDATION_PATTERN = re.compile('[^a-zA-Z0-9_]|_')
@@ -8,55 +10,22 @@ VARIABLE_NUMERAL_BEGINNING_PATTERN = re.compile('^[0-9]')
 
 log = logging.getLogger("dypy.variables")
 
-class StateVariable(object):
-	"""
 
-		:param name:
-		:param values:
-		:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.
-				If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
-				and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
-				by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
-				intact
-	"""
-
-	def __init__(self, name, values, variable_id=None):
-		self.name = name
-		self.values = values
-
-		self.column_index = None  # this will be set by the calling DP - it indicates what column in the table has this information
-
-		self.variable_id = check_variable_id(name=name, variable_id=variable_id)
-
-
-class DecisionVariable(object):
-	"""
-		We'll use this to manage the decision variable - we'll need columns for each potential value here
-
-	:param name:
-	:param related_state: the StateVariable object that this DecisionVariable directly feeds back on
-	:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.
-			If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
-			and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
-			by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
-			intact
-	"""
-
-	def __init__(self, name, variable_id=None, related_state=None, minimum=None, maximum=None, step_size=None, options=None):
+class AbstractVariable(object):
+	def __init__(self, name, variable_id=None, minimum=None, maximum=None, step_size=None, values=None):
 		self.name = name
 		self.variable_id = check_variable_id(name=name, variable_id=variable_id)
-		self.related_state = related_state
 
 		self._min = minimum
 		self._max = maximum
 		self._step_size = step_size
-		self._options = options
-		if options:
+		self._options = values
+		if values is not None:
 			self._user_set_options = True  # keep track so we can zero it out later if they set min/max/stepsize params
 		else:
 			self._user_set_options = False
 
-		self.constraints = {}
+
 
 	# we have all of these simple things as @property methods instead of simple attributes so we can
 	# make sure to have the correct behaviors if users set the options themselves
@@ -92,10 +61,10 @@ class DecisionVariable(object):
 			self._options = None  # if we change any of the params, clear the options
 
 	@property
-	def options(self):
-		if self._options:  # if they gave us options
+	def values(self):
+		if self._options is not None:  # if they gave us options or we already made them
 			return self._options
-		elif self._min and self._max and self.step_size:
+		elif self._min is not None and self._max is not None and self._step_size is not None:
 			if type(self._min) == "int" and type(self._max) == "int" and type(self.step_size) == "int":  # if they're all integers we'll use range
 				self._options = range(self._min, self._max, self.step_size)  # cache it so next time we don't have to calculate
 			else:
@@ -107,10 +76,55 @@ class DecisionVariable(object):
 
 		raise ValueError("Can't get DecisionVariable options - need either explicit options (.options) or a minimum value, a maximum value, and a step size")
 
-	@options.setter
-	def options(self, value):
+	@values.setter
+	def values(self, value):
 		self._options = value
 		self._user_set_options = True
+
+
+class StateVariable(AbstractVariable):
+	"""
+
+		:param name:
+		:param values:
+		:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.
+				If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
+				and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
+				by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
+				intact
+	"""
+
+	def __init__(self, *args, **kwargs):
+
+		self.column_index = None  # this will be set by the calling DP - it indicates what column in the table has this information
+
+		if six.PY3:
+			super().__init__(*args, **kwargs)
+		elif six.PY2:
+			super(StateVariable, self).__init__(*args, **kwargs)
+
+
+class DecisionVariable(AbstractVariable):
+	"""
+		We'll use this to manage the decision variable - we'll need columns for each potential value here
+
+	:param name:
+	:param related_state: the StateVariable object that this DecisionVariable directly feeds back on
+	:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.
+			If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
+			and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
+			by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization
+			intact
+	"""
+
+	def __init__(self, *args, **kwargs):
+		self.related_state = None
+		self.constraints = {}
+
+		if six.PY3:
+			super().__init__(*args, **kwargs)
+		elif six.PY2:
+			super(DecisionVariable, self).__init__(*args, **kwargs)
 
 	def add_constraint(self, stage, value):
 		"""
