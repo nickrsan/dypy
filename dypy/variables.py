@@ -12,7 +12,7 @@ log = logging.getLogger("dypy.variables")
 
 
 class AbstractVariable(object):
-	def __init__(self, name, variable_id=None, minimum=None, maximum=None, step_size=None, values=None):
+	def __init__(self, name, variable_id=None, minimum=None, maximum=None, step_size=None, values=None, *args, **kwargs):
 		self.name = name
 		self.variable_id = check_variable_id(name=name, variable_id=variable_id)
 
@@ -87,6 +87,9 @@ class StateVariable(AbstractVariable):
 
 		:param name:
 		:param values:
+		:param initial_state: the initial value of this state variable at stage 0 - used when getting the ultimate
+						solution - if not provided or None, then any state can be usd in the first stage, which is often
+						not desired.
 		:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.
 				If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
 				and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
@@ -97,6 +100,11 @@ class StateVariable(AbstractVariable):
 	def __init__(self, *args, **kwargs):
 
 		self.column_index = None  # this will be set by the calling DP - it indicates what column in the table has this information
+
+		if 'initial_state' in kwargs:
+			self.initial_state = kwargs['initial_state']
+		else:
+			self.initial_state = None
 
 		if six.PY3:
 			super().__init__(*args, **kwargs)

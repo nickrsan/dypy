@@ -89,11 +89,13 @@ class DynamicProgram(object):
 		:param selection_constraints: Is there a minimum value that must be achieved in the selection?
 				If so, this should be a list with the required quantity at each time step
 
-		:param decision_variables: list of DecisionVariable objects
+		:param decision_variable: a DecisionVariable instance object
 
-		:param discount_rate: give the discount rate in "annual" units. Though timesteps don't need to be in years, think
+		:param discount_rate: give the discount rate in timestep_size units. Though timesteps don't need to be in years, think
 			of the discount rate as applying per smallest possible timestep size, so if your timestep_size is 40, then
-			your discount rate will be transformed to cover 40 timesteps (compounding).
+			your discount rate will be for one timestep in 40 and will compound across the 40 timesteps in the single stage.
+			Defaults to 0, which results in no discounting, and discounting is only enabled automatically if you use the DiscountedSimplePrior, or another Prior object
+			that handles discounting.
 
 		:param calculation_function: What function are we using to evaluate? Basically, is this a maximization (benefit)
 		 or minimization (costs) setup. Provide the function object for max or min. Provide the actual `min` or `max functions
@@ -115,6 +117,7 @@ class DynamicProgram(object):
 		self.max_selections = max_selections
 
 		self._all_states = None
+		self._initial_states =None
 		self._state_keys = None
 
 		self.state_variables = list()
@@ -180,7 +183,17 @@ class DynamicProgram(object):
 		"""
 		self._index_state_variables()  # make sure to reindex the variables when we add one
 		self._all_states = list(itertools.product(*[var.values for var in self.state_variables]))
+		self._setup_initial_state()
 		self._state_keys = [var.variable_id for var in self.state_variables]  # will be in same order as provided to all_states
+
+	def _setup_initial_state(self):
+		var_values = []
+		for var in self.state_variables:
+			if var.initial_state is not None:  # if it specifies an initial value for this state, use it and only it
+				var_values.append([var.initial_state])  # make it a list before appending - we'll use that in a moment
+			else:
+				var_values.append(var.values)
+		self._initial_states = list(itertools.product(*var_values))
 
 	def _index_state_variables(self):
 		for index, variable in enumerate(self.state_variables):
@@ -326,7 +339,10 @@ class Stage(object):
 		:return:
 		"""
 
-		states = self.parent_dp._all_states
+		if self.number == 0:
+			states = self.parent_dp._initial_states  # use only the initial states if provided for the first stage
+		else:
+			states = self.parent_dp._all_states  # otherwise use all states for the future
 		state_kwargs = self.parent_dp._state_keys
 		decisions = self.decision_variable.values
 		self.matrix = numpy.zeros((len(states), len(decisions)))
@@ -394,7 +410,7 @@ class Stage(object):
 		if self.prior_handler.exists():  # if we have prior data
 			self.matrix = self.prior_handler.apply()  # then apply it to the current matrix
 
-		self.pass_data = self.parent_dp.calculation_function(self.matrix, axis=1)  # sum the rows and find the max
+		self.pass_data = self.parent_dp.calculation_function(self.matrix, axis=1)  # sum the rows and find the best
 		self.choices_index = self.parent_dp.index_calculation_function(self.matrix, axis=1)  # get the column of the min/max value
 
 		if self.previous_stage:
@@ -508,10 +524,16 @@ class SimplePrior(Prior):
 
 
 class DiscountedSimplePrior(SimplePrior):
-	def __init__(self, *args, **kwargs):
+	"""
+		Same as SimplePrior, but discounts values from future stages before applying them to the current
+		stage. This discounting is cumulative (as in stage n+2 will be discounted and applied to stage n+1
+		and then that summed value will then be discounted and applied to stage n.
 
+		Discount rate is taken from the DynamicProgram object and will be transformed (simply) to cover the timestep
+		size on the DynamicProgram - see the DynamicProgram parameter documentation for more.
+	"""
 
-		if six.PY3:
-			super().__init__(*args, **kwargs)
-		elif six.PY2:
-			super(StateVariable, self).__init__(*args, **kwargs)
+	def setUp(self):
+		self._transformation = support.present_value
+		self._transformation_kwargs = {'year': self.parent_stage.parent_dp.timestep_size,
+									   'discount_rate': self.parent_stage.parent_dp.discount_rate}
