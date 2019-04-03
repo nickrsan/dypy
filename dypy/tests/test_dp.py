@@ -19,7 +19,7 @@ class SimpleDPTest(unittest.TestCase):
 			[0, 6, 7, 9, 9],
 		]
 
-		dynamic_program = dypy.DynamicProgram(timestep_size=1, time_horizon=4, calculation_function=max)
+		dynamic_program = dypy.DynamicProgram(timestep_size=1, time_horizon=4, calculation_function=dypy.MAXIMIZE)
 
 		dynamic_program.decision_variable = decision_variable
 		dynamic_program.add_state_variable(state_variable)

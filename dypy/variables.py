@@ -90,6 +90,17 @@ class StateVariable(AbstractVariable):
 		:param initial_state: the initial value of this state variable at stage 0 - used when getting the ultimate
 						solution - if not provided or None, then any state can be usd in the first stage, which is often
 						not desired.
+		:param availability_function: A numpy function indicating which states in the next stage are valid selections given
+						the value in the current stage plus decisions. Should be:
+						- numpy.equal (default) - only values that match the current state of this variable are available selections
+						- numpy.not_equal - only values *not* matching the current state are valid
+						- numpy.greater - only state values greater than the current state are available selections
+						- numpy.greater_equal - same as above, but greater than or equal
+						- numpy.less - only state values less than the current state are available selections
+						- numpy.less_equal - same as above, but less than or equal
+
+						Any function that takes a 2D numpy array as parameter one and the state value as parameter 2 and returns
+						a new 2D array is valid.
 		:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.
 				If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
 				and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg
@@ -105,6 +116,11 @@ class StateVariable(AbstractVariable):
 			self.initial_state = kwargs['initial_state']
 		else:
 			self.initial_state = None
+
+		if 'availability_function' in kwargs:
+			self.availability_function = kwargs['availability_function']
+		else:
+			self.availability_function = numpy.equal
 
 		self.current_state = self.initial_state
 

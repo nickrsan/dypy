@@ -45,6 +45,7 @@ import itertools
 
 import six
 import numpy
+import pandas
 
 from .reducers import Reducer, ProbabilisticReducer, VariableReducer
 from .variables import StateVariable, DecisionVariable
@@ -117,6 +118,7 @@ class DynamicProgram(object):
 		self.max_selections = max_selections
 
 		self._all_states = None
+		self._all_states_df = None
 		self._initial_states =None
 		self._state_keys = None
 
@@ -183,6 +185,7 @@ class DynamicProgram(object):
 		"""
 		self._index_state_variables()  # make sure to reindex the variables when we add one
 		self._all_states = list(itertools.product(*[var.values for var in self.state_variables]))
+		self._all_states_df = pandas.DataFrame(self._all_states, columns=[var.variable_id for var in self.state_variables])
 		self._setup_initial_state()
 		self._state_keys = [var.variable_id for var in self.state_variables]  # will be in same order as provided to all_states
 
@@ -243,7 +246,7 @@ class DynamicProgram(object):
 		:return:
 		"""
 
-		for stage_id in range(1, self.time_horizon+1, self.timestep_size):
+		for stage_id in range(0, self.time_horizon+1, self.timestep_size):
 			self.add_stage(name="{} {}".format(name_prefix, stage_id))
 
 	def _is_default(self):
@@ -339,6 +342,7 @@ class Stage(object):
 		:return:
 		"""
 
+		log.info("Building stage {}".format(self.number))
 		if self.number == 0:
 			states = self.parent_dp._initial_states  # use only the initial states if provided for the first stage
 		else:
@@ -416,6 +420,39 @@ class Stage(object):
 		if self.previous_stage:
 			self.previous_stage.optimize(self.pass_data)  # now run the prior stage
 
+	def _filter_available_states(self):
+		"""
+			An important function that creates the matrix of available choices when
+			we do the forward calculation - by default, goes through each state variable
+			and subsets the matrix of values to the ones that are feasible based
+			on the state variable's current state. If the variable has no current state,
+			all options are evaluated. If it has a current states, then it is subset
+			based on the variable's availability function, which defines the relationship
+			of the current state to available choices. See documentation about variables
+			for more.
+		:return: None - sets self.search_matrix to available values and self.search_states to the corresponding state values
+		"""
+		if self.number == 0:  # in the first state, we've already filtered it
+			self.search_matrix = self.matrix
+			# TODO: Doesn't set the search states
+			return
+
+		self.search_matrix = self.matrix  # start with the full matrix
+		self.search_states = self.parent_dp._all_states_df
+
+		for variable in self.parent_dp.state_variables:
+			if variable.current_state is None:  # skip any variable without a current state - we'll use all options then
+				continue
+
+			# this next line is a doozy - it gets the row ids where the *current* state variable's
+			# current value has the relationship defined in the variable's availability function
+			# - for example, if the current state of the current var is 2 and the availability
+			# function is numpy.equal, then it gets the row indices where this state var equals 2
+			index = self.search_states.index[variable.availability_function(self.search_states[variable.variable_id], variable.current_state)]
+
+			self.search_states = self.search_states.loc[index]  # subset the search states - this will then be used for the next state var
+			self.search_matrix = self.search_matrix[index]  # subset the search matrix to match  - this will be used by the later function to decide what's best
+
 	def get_optimal_values(self, prior=0):
 		"""
 			After running the backward DP, moves forward and finds the best choices at each stage.
@@ -423,31 +460,34 @@ class Stage(object):
 		:return:
 		"""
 
-		if self.parent_dp.max_selections:  # this format probably only works for 1 state variable and will need to be re-engineered
-			max_selections = self.parent_dp.max_selections
-		else:
-			max_selections = len(self.parent_dp._all_states)
+		# TODO: we'll want to implement the max_selections again using the available state filtering - might just be numpy.less
+		#if self.parent_dp.max_selections:  # this format probably only works for 1 state variable and will need to be re-engineered
+		#	max_selections = self.parent_dp.max_selections
+		#else:
+		#	max_selections = len(self.parent_dp._all_states)
 
-		amount_remaining = max_selections - prior
-		if amount_remaining > 0:
-			available_options = self.pass_data[:amount_remaining]  # strip off the end of it to remove values that we can't use
-			best_option = available_options[-1]  # get the last value
-			row_of_best = numpy.where(available_options == best_option)  # now we need the actual row to use in the matrix
+		#amount_remaining = max_selections - prior
+		self._filter_available_states()  # gives us self.search_matrix with available options
 
-			if self.matrix.any():
-				column_of_best = numpy.where(self.matrix[row_of_best[0]] == best_option)[-1].flatten()[0]  # get the column of the best option - also the number of days
-			else:  # this triggers for the last item, which doesn't have a matrix, but just a costs list
-				column_of_best = row_of_best + 1
+		if self.search_matrix.any():
+			# start with all options
+
+			self.best_option = self.parent_dp.calculation_function(self.search_matrix)
+			coord_sets = numpy.argwhere(self.search_matrix == self.best_option)
+			self.row_of_best = coord_sets[0][0]
+			self.column_of_best = coord_sets[0][1]
+
 		else:
-			best_option = 0
-			column_of_best = 0
+			self.best_option = 0
+			self.row_of_best = 0
+			self.column_of_best = 0
 
 		#if self.selection_constraints:
 		#	number_of_items = max([0, column_of_best - self.selection_constraints[self.number]])  # take the max with 0 - if it's negative, it should be 0
 		#else:
-		self.decision_amount = self.parent_dp.decision_variable.values[column_of_best]
-		self.future_value_of_decision = best_option
-		log.info("{} - Decision Amount at Stage: {}, Total Cost/Benefit: {}".format(self.name, self.decision_amount, best_option))
+		self.decision_amount = self.parent_dp.decision_variable.values[self.column_of_best]
+		self.future_value_of_decision = self.best_option
+		log.info("{} - Decision Amount at Stage: {}, Total Cost/Benefit: {}".format(self.name, self.decision_amount, self.best_option))
 
 		# TODO: Should make the value of each state at the time of decision in each stage accessible on stage objects
 		if self.decision_variable.related_state is not None:  # update the state of the state variable to match the new decision
