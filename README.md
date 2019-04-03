@@ -15,7 +15,13 @@ It achieves this approach with an extensive set of classes that are meant to be 
 as much as possible just works, but you can tweak things or provide options to handle your specific case. New contributions
 that follow this philosophy are welcome!
 
-Documentation for the in-development dypy can be found at https://nickrsan.github.io/dypy
-
 If our disclaimer is big and scary (it should be) and you have a need for a library supporting dynamic programming, you 
 might be interested in [ProDyn](https://prodyn.readthedocs.io/en/latest/index.html), which seems complete but is likely less flexible.
+
+# Installation
+DyPy isn't currently on PyPI/pip (see above disclaimer about not being ready for production use) - if you know
+how to use setup files, you can clone this repository and install the package. I'll make this easier and update
+these instructions once I have more faith in the results produced by this solver.
+
+# Documentation
+Documentation for the in-development dypy and its API can be found at https://nickrsan.github.io/dypy

@@ -20,7 +20,7 @@ setup(name="dypy",
 	long_description="""Forthcoming
 	""",
 	packages=['dypy',],
-	requires=['numpy', 'six'],
+	requires=['numpy', 'pandas', 'six'],
 	author=__author__,
 	author_email="nrsantos@ucdavis.edu",
 	url='https://github.com/ucd-cws/dypy',
