@@ -193,6 +193,22 @@ a master variable. Probabilities must be provided by the user.</p>
 </pre></div>
 </div>
 <dl class="class">
+<dt id="dypy.DiscountedSimplePrior">
+<em class="property">class </em><code class="descclassname">dypy.</code><code class="descname">DiscountedSimplePrior</code><span class="sig-paren">(</span><em>stage</em>, <em>data=None</em>, <em>matrix=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DiscountedSimplePrior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DiscountedSimplePrior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dypy.SimplePrior" title="dypy.SimplePrior"><code class="xref py py-class docutils literal notranslate"><span class="pre">dypy.SimplePrior</span></code></a></p>
+<p>Same as SimplePrior, but discounts values from future stages before applying them to the current
+stage. This discounting is cumulative (as in stage n+2 will be discounted and applied to stage n+1
+and then that summed value will then be discounted and applied to stage n.</p>
+<p>Discount rate is taken from the DynamicProgram object and will be transformed (simply) to cover the timestep
+size on the DynamicProgram - see the DynamicProgram parameter documentation for more.</p>
+<dl class="method">
+<dt id="dypy.DiscountedSimplePrior.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DiscountedSimplePrior.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DiscountedSimplePrior.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="dypy.DynamicProgram">
 <em class="property">class </em><code class="descclassname">dypy.</code><code class="descname">DynamicProgram</code><span class="sig-paren">(</span><em>objective_function=&lt;function default_objective&gt;</em>, <em>timestep_size=None</em>, <em>time_horizon=None</em>, <em>discount_rate=0</em>, <em>state_variables=None</em>, <em>max_selections=None</em>, <em>selection_constraints=None</em>, <em>decision_variable=None</em>, <em>calculation_function=None</em>, <em>prior=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#DynamicProgram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.DynamicProgram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -211,10 +227,12 @@ a master variable. Probabilities must be provided by the user.</p>
 you build your own stages with their own values</li>
 <li><strong>selection_constraints</strong> – Is there a minimum value that must be achieved in the selection?
 If so, this should be a list with the required quantity at each time step</li>
-<li><strong>decision_variables</strong> – list of DecisionVariable objects</li>
-<li><strong>discount_rate</strong> – give the discount rate in “annual” units. Though timesteps don’t need to be in years, think
+<li><strong>decision_variable</strong> – a DecisionVariable instance object</li>
+<li><strong>discount_rate</strong> – give the discount rate in timestep_size units. Though timesteps don’t need to be in years, think
 of the discount rate as applying per smallest possible timestep size, so if your timestep_size is 40, then
-your discount rate will be transformed to cover 40 timesteps (compounding).</li>
+your discount rate will be for one timestep in 40 and will compound across the 40 timesteps in the single stage.
+Defaults to 0, which results in no discounting, and discounting is only enabled automatically if you use the DiscountedSimplePrior, or another Prior object
+that handles discounting.</li>
 <li><strong>calculation_function</strong> – What function are we using to evaluate? Basically, is this a maximization (benefit)
 or minimization (costs) setup. Provide the function object for max or min. Provide the actual <cite>min</cite> or <a href="#id1"><span class="problematic" id="id2">`</span></a>max functions
 (don’t run it, just the name) or if convenient, use the shortcuts dp.MINIMIZE or dp.MAXIMIZE</li>
@@ -319,6 +337,7 @@ a different implementation. The apply method should return the new matrix</p>
 application methods, if needed</li>
 <li><strong>data</strong> – The values from the future stage to apply back to the previous stage</li>
 <li><strong>matrix</strong> – The matrix (2D numpy array) for consideration in the current stage</li>
+<li><strong>transformation</strong> – A function - can be used by subclasses to transform values prior to applying them</li>
 </ul>
 </td>
 </tr>
@@ -332,6 +351,11 @@ application methods, if needed</li>
 <dl class="method">
 <dt id="dypy.Prior.exists">
 <code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Prior.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Prior.exists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dypy.Prior.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy.html#Prior.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.Prior.setUp" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -463,9 +487,35 @@ at 0 before solving.</div></blockquote>
 <div class="section" id="module-dypy.variables">
 <span id="dypy-variables"></span><h2>DyPy Variables<a class="headerlink" href="#module-dypy.variables" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="dypy.variables.DecisionVariable">
-<em class="property">class </em><code class="descclassname">dypy.variables.</code><code class="descname">DecisionVariable</code><span class="sig-paren">(</span><em>name</em>, <em>variable_id=None</em>, <em>related_state=None</em>, <em>minimum=None</em>, <em>maximum=None</em>, <em>step_size=None</em>, <em>options=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#DecisionVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.DecisionVariable" title="Permalink to this definition">¶</a></dt>
+<dt id="dypy.variables.AbstractVariable">
+<em class="property">class </em><code class="descclassname">dypy.variables.</code><code class="descname">AbstractVariable</code><span class="sig-paren">(</span><em>name</em>, <em>variable_id=None</em>, <em>minimum=None</em>, <em>maximum=None</em>, <em>step_size=None</em>, <em>values=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#AbstractVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.AbstractVariable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="dypy.variables.AbstractVariable.maximum">
+<code class="descname">maximum</code><a class="headerlink" href="#dypy.variables.AbstractVariable.maximum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dypy.variables.AbstractVariable.minimum">
+<code class="descname">minimum</code><a class="headerlink" href="#dypy.variables.AbstractVariable.minimum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dypy.variables.AbstractVariable.step_size">
+<code class="descname">step_size</code><a class="headerlink" href="#dypy.variables.AbstractVariable.step_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dypy.variables.AbstractVariable.values">
+<code class="descname">values</code><a class="headerlink" href="#dypy.variables.AbstractVariable.values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="dypy.variables.DecisionVariable">
+<em class="property">class </em><code class="descclassname">dypy.variables.</code><code class="descname">DecisionVariable</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#DecisionVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.DecisionVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dypy.variables.AbstractVariable" title="dypy.variables.AbstractVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">dypy.variables.AbstractVariable</span></code></a></p>
 <blockquote>
 <div>We’ll use this to manage the decision variable - we’ll need columns for each potential value here</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
@@ -511,32 +561,12 @@ Need to think how we’d handle that behavior</p>
 </table>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="dypy.variables.DecisionVariable.maximum">
-<code class="descname">maximum</code><a class="headerlink" href="#dypy.variables.DecisionVariable.maximum" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="dypy.variables.DecisionVariable.minimum">
-<code class="descname">minimum</code><a class="headerlink" href="#dypy.variables.DecisionVariable.minimum" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="dypy.variables.DecisionVariable.options">
-<code class="descname">options</code><a class="headerlink" href="#dypy.variables.DecisionVariable.options" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="dypy.variables.DecisionVariable.step_size">
-<code class="descname">step_size</code><a class="headerlink" href="#dypy.variables.DecisionVariable.step_size" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="class">
 <dt id="dypy.variables.StateVariable">
-<em class="property">class </em><code class="descclassname">dypy.variables.</code><code class="descname">StateVariable</code><span class="sig-paren">(</span><em>name</em>, <em>values</em>, <em>variable_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#StateVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.StateVariable" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="descclassname">dypy.variables.</code><code class="descname">StateVariable</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dypy/variables.html#StateVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dypy.variables.StateVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dypy.variables.AbstractVariable" title="dypy.variables.AbstractVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">dypy.variables.AbstractVariable</span></code></a></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -544,6 +574,20 @@ Need to think how we’d handle that behavior</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>name</strong> – </li>
 <li><strong>values</strong> – </li>
+<li><strong>initial_state</strong> – the initial value of this state variable at stage 0 - used when getting the ultimate
+solution - if not provided or None, then any state can be usd in the first stage, which is often
+not desired.</li>
+<li><strong>availability_function</strong> – <p>A numpy function indicating which states in the next stage are valid selections given
+the value in the current stage plus decisions. Should be:
+- numpy.equal (default) - only values that match the current state of this variable are available selections
+- numpy.not_equal - only values <em>not</em> matching the current state are valid
+- numpy.greater - only state values greater than the current state are available selections
+- numpy.greater_equal - same as above, but greater than or equal
+- numpy.less - only state values less than the current state are available selections
+- numpy.less_equal - same as above, but less than or equal</p>
+<p>Any function that takes a 2D numpy array as parameter one and the state value as parameter 2 and returns
+a new 2D array is valid.</p>
+</li>
 <li><strong>variable_id</strong> – will be used as the kwarg name when passing the value of the state into the objective function.
 If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,
 and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg

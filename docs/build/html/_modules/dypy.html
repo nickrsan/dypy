@@ -193,7 +193,9 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 
+<span class="kn">import</span> <span class="nn">six</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
 
 <span class="kn">from</span> <span class="nn">.reducers</span> <span class="k">import</span> <span class="n">Reducer</span><span class="p">,</span> <span class="n">ProbabilisticReducer</span><span class="p">,</span> <span class="n">VariableReducer</span>
 <span class="kn">from</span> <span class="nn">.variables</span> <span class="k">import</span> <span class="n">StateVariable</span><span class="p">,</span> <span class="n">DecisionVariable</span>
@@ -238,11 +240,13 @@
 <span class="sd">		:param selection_constraints: Is there a minimum value that must be achieved in the selection?</span>
 <span class="sd">				If so, this should be a list with the required quantity at each time step</span>
 
-<span class="sd">		:param decision_variables: list of DecisionVariable objects</span>
+<span class="sd">		:param decision_variable: a DecisionVariable instance object</span>
 
-<span class="sd">		:param discount_rate: give the discount rate in &quot;annual&quot; units. Though timesteps don&#39;t need to be in years, think</span>
+<span class="sd">		:param discount_rate: give the discount rate in timestep_size units. Though timesteps don&#39;t need to be in years, think</span>
 <span class="sd">			of the discount rate as applying per smallest possible timestep size, so if your timestep_size is 40, then</span>
-<span class="sd">			your discount rate will be transformed to cover 40 timesteps (compounding).</span>
+<span class="sd">			your discount rate will be for one timestep in 40 and will compound across the 40 timesteps in the single stage.</span>
+<span class="sd">			Defaults to 0, which results in no discounting, and discounting is only enabled automatically if you use the DiscountedSimplePrior, or another Prior object</span>
+<span class="sd">			that handles discounting.</span>
 
 <span class="sd">		:param calculation_function: What function are we using to evaluate? Basically, is this a maximization (benefit)</span>
 <span class="sd">		 or minimization (costs) setup. Provide the function object for max or min. Provide the actual `min` or `max functions</span>
@@ -264,10 +268,12 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">max_selections</span> <span class="o">=</span> <span class="n">max_selections</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">_all_states</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_all_states_df</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_initial_states</span> <span class="o">=</span><span class="kc">None</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_state_keys</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="k">if</span> <span class="ow">not</span> <span class="n">state_variables</span><span class="p">:</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">state_variables</span> <span class="o">=</span> <span class="p">[]</span>
-		<span class="k">else</span><span class="p">:</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">state_variables</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+		<span class="k">if</span> <span class="n">state_variables</span><span class="p">:</span>
 			<span class="k">for</span> <span class="n">variable</span> <span class="ow">in</span> <span class="n">state_variables</span><span class="p">:</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">add_state_variable</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">setup_state</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_setup_state_variables</span><span class="p">()</span>  <span class="c1"># set up the state variables for the DP once all are added</span>
@@ -329,7 +335,18 @@
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_index_state_variables</span><span class="p">()</span>  <span class="c1"># make sure to reindex the variables when we add one</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_all_states</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">var</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_variables</span><span class="p">]))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_all_states_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_all_states</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">var</span><span class="o">.</span><span class="n">variable_id</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_variables</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_setup_initial_state</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_state_keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">var</span><span class="o">.</span><span class="n">variable_id</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_variables</span><span class="p">]</span>  <span class="c1"># will be in same order as provided to all_states</span>
+
+	<span class="k">def</span> <span class="nf">_setup_initial_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">var_values</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_variables</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">initial_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># if it specifies an initial value for this state, use it and only it</span>
+				<span class="n">var_values</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">var</span><span class="o">.</span><span class="n">initial_state</span><span class="p">])</span>  <span class="c1"># make it a list before appending - we&#39;ll use that in a moment</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">var_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_initial_states</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">var_values</span><span class="p">))</span>
 
 	<span class="k">def</span> <span class="nf">_index_state_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">variable</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_variables</span><span class="p">):</span>
@@ -379,7 +396,7 @@
 <span class="sd">		:return:</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 
-		<span class="k">for</span> <span class="n">stage_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_horizon</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestep_size</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">stage_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_horizon</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestep_size</span><span class="p">):</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">add_stage</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name_prefix</span><span class="p">,</span> <span class="n">stage_id</span><span class="p">))</span></div>
 
 	<span class="k">def</span> <span class="nf">_is_default</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -400,7 +417,7 @@
 <div class="viewcode-block" id="DynamicProgram.run"><a class="viewcode-back" href="../api.html#dypy.DynamicProgram.run">[docs]</a>	<span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_default</span><span class="p">():</span>
-			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Objective function must be provided before running DP. Either provide it as an argument&quot;</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Objective function must be provided before running DP. Either provide it as an argument &quot;</span>
 							 <span class="s2">&quot;at creation, or set the .objective_function parameter to a function object (*not* a function result)&quot;</span><span class="p">)</span>
 
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">decision_variable</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_variables</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -458,7 +475,12 @@
 
 <div class="viewcode-block" id="Stage.create_prior_handler"><a class="viewcode-back" href="../api.html#dypy.Stage.create_prior_handler">[docs]</a>	<span class="k">def</span> <span class="nf">create_prior_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler_class</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span></div>
+			<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prior_handler_class</span><span class="p">,</span> <span class="n">Prior</span><span class="p">):</span>  <span class="c1"># if it&#39;s already an instantiated object</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler_class</span>  <span class="c1"># set the item</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span><span class="o">.</span><span class="n">stage</span> <span class="o">=</span> <span class="bp">self</span>  <span class="c1"># tell it that it applies to this item</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">prior_handler_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span><span class="o">.</span><span class="vm">__class__</span>  <span class="c1"># and set the class</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler_class</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># otherwise, create it</span></div>
 
 <div class="viewcode-block" id="Stage.build"><a class="viewcode-back" href="../api.html#dypy.Stage.build">[docs]</a>	<span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
@@ -470,18 +492,22 @@
 <span class="sd">		:return:</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 
-		<span class="n">states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">_all_states</span>
+		<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Building stage </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number</span><span class="p">))</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">number</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+			<span class="n">states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">_initial_states</span>  <span class="c1"># use only the initial states if provided for the first stage</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">_all_states</span>  <span class="c1"># otherwise use all states for the future</span>
 		<span class="n">state_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">_state_keys</span>
-		<span class="n">decisions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decision_variable</span><span class="o">.</span><span class="n">options</span>
+		<span class="n">decisions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decision_variable</span><span class="o">.</span><span class="n">values</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">decisions</span><span class="p">)))</span>
 
 		<span class="k">for</span> <span class="n">row_id</span><span class="p">,</span> <span class="n">state_values</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">states</span><span class="p">):</span>
 			<span class="k">for</span> <span class="n">column_id</span><span class="p">,</span> <span class="n">decision_value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">decisions</span><span class="p">):</span>
 				<span class="n">state_data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">state_kwargs</span><span class="p">,</span> <span class="n">state_values</span><span class="p">))</span>  <span class="c1"># build the kwarg pairs into a dictionary we can pass into the objective function</span>
 				<span class="n">decision_data</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">decision_variable</span><span class="o">.</span><span class="n">variable_id</span><span class="p">:</span> <span class="n">decision_value</span><span class="p">}</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">row_id</span><span class="p">][</span><span class="n">column_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">objective_function</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
-																					<span class="o">**</span><span class="n">support</span><span class="o">.</span><span class="n">merge_dicts</span><span class="p">(</span><span class="n">state_data</span><span class="p">,</span>
-																										  <span class="n">decision_data</span><span class="p">))</span></div>
+				<span class="n">objective_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">objective_function</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>	<span class="o">**</span><span class="n">support</span><span class="o">.</span><span class="n">merge_dicts</span><span class="p">(</span><span class="n">state_data</span><span class="p">,</span>
+																										  <span class="n">decision_data</span><span class="p">))</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">row_id</span><span class="p">][</span><span class="n">column_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">objective_value</span>  <span class="c1"># have this on a separate line for debugging</span></div>
 
 	<span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
@@ -538,11 +564,44 @@
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>  <span class="c1"># if we have prior data</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_handler</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>  <span class="c1"># then apply it to the current matrix</span>
 
-		<span class="bp">self</span><span class="o">.</span><span class="n">pass_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">calculation_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># sum the rows and find the max</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">pass_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">calculation_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># sum the rows and find the best</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">choices_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">index_calculation_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># get the column of the min/max value</span>
 
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_stage</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">previous_stage</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pass_data</span><span class="p">)</span>  <span class="c1"># now run the prior stage</span></div>
+
+	<span class="k">def</span> <span class="nf">_filter_available_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">			An important function that creates the matrix of available choices when</span>
+<span class="sd">			we do the forward calculation - by default, goes through each state variable</span>
+<span class="sd">			and subsets the matrix of values to the ones that are feasible based</span>
+<span class="sd">			on the state variable&#39;s current state. If the variable has no current state,</span>
+<span class="sd">			all options are evaluated. If it has a current states, then it is subset</span>
+<span class="sd">			based on the variable&#39;s availability function, which defines the relationship</span>
+<span class="sd">			of the current state to available choices. See documentation about variables</span>
+<span class="sd">			for more.</span>
+<span class="sd">		:return: None - sets self.search_matrix to available values and self.search_states to the corresponding state values</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">number</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># in the first state, we&#39;ve already filtered it</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">search_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span>
+			<span class="c1"># TODO: Doesn&#39;t set the search states</span>
+			<span class="k">return</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">search_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span>  <span class="c1"># start with the full matrix</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">search_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">_all_states_df</span>
+
+		<span class="k">for</span> <span class="n">variable</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">state_variables</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">variable</span><span class="o">.</span><span class="n">current_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># skip any variable without a current state - we&#39;ll use all options then</span>
+				<span class="k">continue</span>
+
+			<span class="c1"># this next line is a doozy - it gets the row ids where the *current* state variable&#39;s</span>
+			<span class="c1"># current value has the relationship defined in the variable&#39;s availability function</span>
+			<span class="c1"># - for example, if the current state of the current var is 2 and the availability</span>
+			<span class="c1"># function is numpy.equal, then it gets the row indices where this state var equals 2</span>
+			<span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_states</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">availability_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">search_states</span><span class="p">[</span><span class="n">variable</span><span class="o">.</span><span class="n">variable_id</span><span class="p">],</span> <span class="n">variable</span><span class="o">.</span><span class="n">current_state</span><span class="p">)]</span>
+
+			<span class="bp">self</span><span class="o">.</span><span class="n">search_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_states</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>  <span class="c1"># subset the search states - this will then be used for the next state var</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">search_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_matrix</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>  <span class="c1"># subset the search matrix to match  - this will be used by the later function to decide what&#39;s best</span>
 
 <div class="viewcode-block" id="Stage.get_optimal_values"><a class="viewcode-back" href="../api.html#dypy.Stage.get_optimal_values">[docs]</a>	<span class="k">def</span> <span class="nf">get_optimal_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
@@ -551,31 +610,41 @@
 <span class="sd">		:return:</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">max_selections</span><span class="p">:</span>  <span class="c1"># this format probably only works for 1 state variable and will need to be re-engineered</span>
-			<span class="n">max_selections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">max_selections</span>
-		<span class="k">else</span><span class="p">:</span>
-			<span class="n">max_selections</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">_all_states</span><span class="p">)</span>
+		<span class="c1"># TODO: we&#39;ll want to implement the max_selections again using the available state filtering - might just be numpy.less</span>
+		<span class="c1">#if self.parent_dp.max_selections:  # this format probably only works for 1 state variable and will need to be re-engineered</span>
+		<span class="c1">#	max_selections = self.parent_dp.max_selections</span>
+		<span class="c1">#else:</span>
+		<span class="c1">#	max_selections = len(self.parent_dp._all_states)</span>
 
-		<span class="n">amount_remaining</span> <span class="o">=</span> <span class="n">max_selections</span> <span class="o">-</span> <span class="n">prior</span>
-		<span class="k">if</span> <span class="n">amount_remaining</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-			<span class="n">available_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pass_data</span><span class="p">[:</span><span class="n">amount_remaining</span><span class="p">]</span>  <span class="c1"># strip off the end of it to remove values that we can&#39;t use</span>
-			<span class="n">best_option</span> <span class="o">=</span> <span class="n">available_options</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># get the last value</span>
-			<span class="n">row_of_best</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">available_options</span> <span class="o">==</span> <span class="n">best_option</span><span class="p">)</span>  <span class="c1"># now we need the actual row to use in the matrix</span>
+		<span class="c1">#amount_remaining = max_selections - prior</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_filter_available_states</span><span class="p">()</span>  <span class="c1"># gives us self.search_matrix with available options</span>
 
-			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-				<span class="n">column_of_best</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">row_of_best</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">==</span> <span class="n">best_option</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># get the column of the best option - also the number of days</span>
-			<span class="k">else</span><span class="p">:</span>  <span class="c1"># this triggers for the last item, which doesn&#39;t have a matrix, but just a costs list</span>
-				<span class="n">column_of_best</span> <span class="o">=</span> <span class="n">row_of_best</span> <span class="o">+</span> <span class="mi">1</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_matrix</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+			<span class="c1"># start with all options</span>
+
+			<span class="bp">self</span><span class="o">.</span><span class="n">best_option</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">calculation_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">search_matrix</span><span class="p">)</span>
+			<span class="n">coord_sets</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">search_matrix</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_option</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">row_of_best</span> <span class="o">=</span> <span class="n">coord_sets</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">column_of_best</span> <span class="o">=</span> <span class="n">coord_sets</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
 		<span class="k">else</span><span class="p">:</span>
-			<span class="n">best_option</span> <span class="o">=</span> <span class="mi">0</span>
-			<span class="n">column_of_best</span> <span class="o">=</span> <span class="mi">0</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">best_option</span> <span class="o">=</span> <span class="mi">0</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">row_of_best</span> <span class="o">=</span> <span class="mi">0</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">column_of_best</span> <span class="o">=</span> <span class="mi">0</span>
 
 		<span class="c1">#if self.selection_constraints:</span>
 		<span class="c1">#	number_of_items = max([0, column_of_best - self.selection_constraints[self.number]])  # take the max with 0 - if it&#39;s negative, it should be 0</span>
 		<span class="c1">#else:</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">decision_variable</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="n">column_of_best</span><span class="p">]</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">future_value_of_decision</span> <span class="o">=</span> <span class="n">best_option</span>
-		<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> - Decision Amount at Stage: </span><span class="si">{}</span><span class="s2">, Total Cost/Benefit: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span><span class="p">,</span> <span class="n">best_option</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">decision_variable</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">column_of_best</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">future_value_of_decision</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_option</span>
+		<span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> - Decision Amount at Stage: </span><span class="si">{}</span><span class="s2">, Total Cost/Benefit: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_option</span><span class="p">))</span>
+
+		<span class="c1"># TODO: Should make the value of each state at the time of decision in each stage accessible on stage objects</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">decision_variable</span><span class="o">.</span><span class="n">related_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># update the state of the state variable to match the new decision</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">decision_variable</span><span class="o">.</span><span class="n">related_state</span><span class="o">.</span><span class="n">current_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">decision_variable</span><span class="o">.</span><span class="n">related_state</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">decision_variable</span><span class="o">.</span><span class="n">related_state</span><span class="o">.</span><span class="n">current_state</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span>
 
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_stage</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">next_stage</span><span class="o">.</span><span class="n">get_optimal_values</span><span class="p">(</span><span class="n">prior</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">decision_amount</span> <span class="o">+</span> <span class="n">prior</span><span class="p">)</span></div></div>
@@ -592,6 +661,7 @@
 <span class="sd">			application methods, if needed</span>
 <span class="sd">		:param data: The values from the future stage to apply back to the previous stage</span>
 <span class="sd">		:param matrix: The matrix (2D numpy array) for consideration in the current stage</span>
+<span class="sd">		:param transformation: A function - can be used by subclasses to transform values prior to applying them</span>
 
 <span class="sd">	&quot;&quot;&quot;</span>
 
@@ -599,6 +669,14 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">parent_stage</span> <span class="o">=</span> <span class="n">stage</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>  <span class="c1"># default transformation just returns the value</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_transformation_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">setUp</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Prior.setUp"><a class="viewcode-back" href="../api.html#dypy.Prior.setUp">[docs]</a>	<span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">pass</span></div>
 
 <div class="viewcode-block" id="Prior.exists"><a class="viewcode-back" href="../api.html#dypy.Prior.exists">[docs]</a>	<span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -620,6 +698,7 @@
 <span class="sd">		the linked_state attribute on the decision variables to understand how to apply priors. This functionality</span>
 <span class="sd">		may need to be re-engineered or expanded.</span>
 <span class="sd">	&quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="SimplePrior.apply"><a class="viewcode-back" href="../api.html#dypy.SimplePrior.apply">[docs]</a>	<span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">for</span> <span class="n">row_index</span><span class="p">,</span> <span class="n">row_value</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">))):</span>  <span class="c1"># go from bottom to top because we modify the items a row below as we go, but need their valus to be intact, so starting at the bottom allows us to use clean values for calculations</span>
 			<span class="k">for</span> <span class="n">column_index</span><span class="p">,</span> <span class="n">column_value</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">row_value</span><span class="p">))):</span>
@@ -634,10 +713,27 @@
 
 				<span class="k">try</span><span class="p">:</span>
 					<span class="n">prior_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">row_index</span><span class="o">-</span><span class="n">column_index</span><span class="p">]</span>
+					<span class="n">prior_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span><span class="p">(</span><span class="n">prior_value</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_transformation_kwargs</span><span class="p">)</span>
 					<span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">row_index</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">column_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">stage_value</span> <span class="o">+</span> <span class="n">prior_value</span>
 				<span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
 					<span class="k">continue</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span></div></div>
+
+
+<div class="viewcode-block" id="DiscountedSimplePrior"><a class="viewcode-back" href="../api.html#dypy.DiscountedSimplePrior">[docs]</a><span class="k">class</span> <span class="nc">DiscountedSimplePrior</span><span class="p">(</span><span class="n">SimplePrior</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Same as SimplePrior, but discounts values from future stages before applying them to the current</span>
+<span class="sd">		stage. This discounting is cumulative (as in stage n+2 will be discounted and applied to stage n+1</span>
+<span class="sd">		and then that summed value will then be discounted and applied to stage n.</span>
+
+<span class="sd">		Discount rate is taken from the DynamicProgram object and will be transformed (simply) to cover the timestep</span>
+<span class="sd">		size on the DynamicProgram - see the DynamicProgram parameter documentation for more.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DiscountedSimplePrior.setUp"><a class="viewcode-back" href="../api.html#dypy.DiscountedSimplePrior.setUp">[docs]</a>	<span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_transformation</span> <span class="o">=</span> <span class="n">support</span><span class="o">.</span><span class="n">present_value</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_transformation_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;year&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_stage</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">timestep_size</span><span class="p">,</span>
+									   <span class="s1">&#39;discount_rate&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_stage</span><span class="o">.</span><span class="n">parent_dp</span><span class="o">.</span><span class="n">discount_rate</span><span class="p">}</span></div></div>
 </pre></div>
 
            </div>

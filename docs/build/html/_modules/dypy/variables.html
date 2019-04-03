@@ -153,6 +153,8 @@
 <span></span><span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 
+<span class="kn">import</span> <span class="nn">six</span>
+
 <span class="kn">import</span> <span class="nn">numpy</span>
 
 <span class="n">VARIABLE_ID_VALIDATION_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;[^a-zA-Z0-9_]|_&#39;</span><span class="p">)</span>
@@ -160,55 +162,22 @@
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;dypy.variables&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="StateVariable"><a class="viewcode-back" href="../../api.html#dypy.variables.StateVariable">[docs]</a><span class="k">class</span> <span class="nc">StateVariable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-	<span class="sd">&quot;&quot;&quot;</span>
 
-<span class="sd">		:param name:</span>
-<span class="sd">		:param values:</span>
-<span class="sd">		:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.</span>
-<span class="sd">				If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,</span>
-<span class="sd">				and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg</span>
-<span class="sd">				by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization</span>
-<span class="sd">				intact</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-
-	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">variable_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
-
-		<span class="bp">self</span><span class="o">.</span><span class="n">column_index</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># this will be set by the calling DP - it indicates what column in the table has this information</span>
-
-		<span class="bp">self</span><span class="o">.</span><span class="n">variable_id</span> <span class="o">=</span> <span class="n">check_variable_id</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">variable_id</span><span class="o">=</span><span class="n">variable_id</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="DecisionVariable"><a class="viewcode-back" href="../../api.html#dypy.variables.DecisionVariable">[docs]</a><span class="k">class</span> <span class="nc">DecisionVariable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-	<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		We&#39;ll use this to manage the decision variable - we&#39;ll need columns for each potential value here</span>
-
-<span class="sd">	:param name:</span>
-<span class="sd">	:param related_state: the StateVariable object that this DecisionVariable directly feeds back on</span>
-<span class="sd">	:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.</span>
-<span class="sd">			If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,</span>
-<span class="sd">			and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg</span>
-<span class="sd">			by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization</span>
-<span class="sd">			intact</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-
-	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">variable_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">related_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="AbstractVariable"><a class="viewcode-back" href="../../api.html#dypy.variables.AbstractVariable">[docs]</a><span class="k">class</span> <span class="nc">AbstractVariable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">variable_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">minimum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">maximum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">variable_id</span> <span class="o">=</span> <span class="n">check_variable_id</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">variable_id</span><span class="o">=</span><span class="n">variable_id</span><span class="p">)</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">related_state</span> <span class="o">=</span> <span class="n">related_state</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">_min</span> <span class="o">=</span> <span class="n">minimum</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_max</span> <span class="o">=</span> <span class="n">maximum</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_step_size</span> <span class="o">=</span> <span class="n">step_size</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">_options</span> <span class="o">=</span> <span class="n">options</span>
-		<span class="k">if</span> <span class="n">options</span><span class="p">:</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_options</span> <span class="o">=</span> <span class="n">values</span>
+		<span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_user_set_options</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># keep track so we can zero it out later if they set min/max/stepsize params</span>
 		<span class="k">else</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_user_set_options</span> <span class="o">=</span> <span class="kc">False</span>
 
-		<span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="p">{}</span>
+
 
 	<span class="c1"># we have all of these simple things as @property methods instead of simple attributes so we can</span>
 	<span class="c1"># make sure to have the correct behaviors if users set the options themselves</span>
@@ -244,10 +213,10 @@
 			<span class="bp">self</span><span class="o">.</span><span class="n">_options</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># if we change any of the params, clear the options</span>
 
 	<span class="nd">@property</span>
-	<span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">:</span>  <span class="c1"># if they gave us options</span>
+	<span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># if they gave us options or we already made them</span>
 			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span>
-		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_size</span><span class="p">:</span>
+		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_min</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;int&quot;</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_max</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;int&quot;</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step_size</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>  <span class="c1"># if they&#39;re all integers we&#39;ll use range</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">_options</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_size</span><span class="p">)</span>  <span class="c1"># cache it so next time we don&#39;t have to calculate</span>
 			<span class="k">else</span><span class="p">:</span>
@@ -259,10 +228,85 @@
 
 		<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t get DecisionVariable options - need either explicit options (.options) or a minimum value, a maximum value, and a step size&quot;</span><span class="p">)</span>
 
-	<span class="nd">@options</span><span class="o">.</span><span class="n">setter</span>
-	<span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+	<span class="nd">@values</span><span class="o">.</span><span class="n">setter</span>
+	<span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_options</span> <span class="o">=</span> <span class="n">value</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">_user_set_options</span> <span class="o">=</span> <span class="kc">True</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_user_set_options</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="StateVariable"><a class="viewcode-back" href="../../api.html#dypy.variables.StateVariable">[docs]</a><span class="k">class</span> <span class="nc">StateVariable</span><span class="p">(</span><span class="n">AbstractVariable</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">		:param name:</span>
+<span class="sd">		:param values:</span>
+<span class="sd">		:param initial_state: the initial value of this state variable at stage 0 - used when getting the ultimate</span>
+<span class="sd">						solution - if not provided or None, then any state can be usd in the first stage, which is often</span>
+<span class="sd">						not desired.</span>
+<span class="sd">		:param availability_function: A numpy function indicating which states in the next stage are valid selections given</span>
+<span class="sd">						the value in the current stage plus decisions. Should be:</span>
+<span class="sd">						- numpy.equal (default) - only values that match the current state of this variable are available selections</span>
+<span class="sd">						- numpy.not_equal - only values *not* matching the current state are valid</span>
+<span class="sd">						- numpy.greater - only state values greater than the current state are available selections</span>
+<span class="sd">						- numpy.greater_equal - same as above, but greater than or equal</span>
+<span class="sd">						- numpy.less - only state values less than the current state are available selections</span>
+<span class="sd">						- numpy.less_equal - same as above, but less than or equal</span>
+
+<span class="sd">						Any function that takes a 2D numpy array as parameter one and the state value as parameter 2 and returns</span>
+<span class="sd">						a new 2D array is valid.</span>
+<span class="sd">		:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.</span>
+<span class="sd">				If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,</span>
+<span class="sd">				and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg</span>
+<span class="sd">				by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization</span>
+<span class="sd">				intact</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">column_index</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># this will be set by the calling DP - it indicates what column in the table has this information</span>
+
+		<span class="k">if</span> <span class="s1">&#39;initial_state&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;initial_state&#39;</span><span class="p">]</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span> <span class="o">=</span> <span class="kc">None</span>
+
+		<span class="k">if</span> <span class="s1">&#39;availability_function&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">availability_function</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;availability_function&#39;</span><span class="p">]</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">availability_function</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">equal</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span>
+
+		<span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
+			<span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+		<span class="k">elif</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+			<span class="nb">super</span><span class="p">(</span><span class="n">StateVariable</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DecisionVariable"><a class="viewcode-back" href="../../api.html#dypy.variables.DecisionVariable">[docs]</a><span class="k">class</span> <span class="nc">DecisionVariable</span><span class="p">(</span><span class="n">AbstractVariable</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		We&#39;ll use this to manage the decision variable - we&#39;ll need columns for each potential value here</span>
+
+<span class="sd">	:param name:</span>
+<span class="sd">	:param related_state: the StateVariable object that this DecisionVariable directly feeds back on</span>
+<span class="sd">	:param variable_id: will be used as the kwarg name when passing the value of the state into the objective function.</span>
+<span class="sd">			If not provided, is generated from name by removing nonalphanumeric or underscore characters, lowercasing,</span>
+<span class="sd">			and removing numbers from the beginning. If it is provided, it is still validated into a Python kwarg</span>
+<span class="sd">			by removing leading numbers and removing non-alphanumeric/underscore characters, while leaving any capitalization</span>
+<span class="sd">			intact</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+		<span class="k">if</span> <span class="s1">&#39;related_state&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">related_state</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;related_state&#39;</span><span class="p">]</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">related_state</span> <span class="o">=</span> <span class="kc">None</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="p">{}</span>
+
+		<span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
+			<span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+		<span class="k">elif</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+			<span class="nb">super</span><span class="p">(</span><span class="n">DecisionVariable</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DecisionVariable.add_constraint"><a class="viewcode-back" href="../../api.html#dypy.variables.DecisionVariable.add_constraint">[docs]</a>	<span class="k">def</span> <span class="nf">add_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
