@@ -292,6 +292,12 @@ class DynamicProgram(object):
 
 		# initiate the optimization and retrieval of the best values
 		self.stages[-1].optimize()
+		self.get_optimal_values()
+
+	def get_optimal_values(self):
+		for variable in self.state_variables:  # reset the states to the initial for each state variable so that if we call this multiple times, we're fine
+			variable.reset_state()
+
 		self.stages[0].get_optimal_values()
 
 
@@ -432,12 +438,7 @@ class Stage(object):
 			for more.
 		:return: None - sets self.search_matrix to available values and self.search_states to the corresponding state values
 		"""
-		if self.number == 0:  # in the first state, we've already filtered it
-			self.search_matrix = self.matrix
-			# TODO: Doesn't set the search states
-			return
-
-		self.search_matrix = self.matrix  # start with the full matrix
+		self.search_matrix = pandas.DataFrame(self.matrix)  # start with the full matrix - must be a data frame so the row indexing works
 		self.search_states = self.parent_dp._all_states_df
 
 		for variable in self.parent_dp.state_variables:
@@ -451,7 +452,9 @@ class Stage(object):
 			index = self.search_states.index[variable.availability_function(self.search_states[variable.variable_id], variable.current_state)]
 
 			self.search_states = self.search_states.loc[index]  # subset the search states - this will then be used for the next state var
-			self.search_matrix = self.search_matrix[index]  # subset the search matrix to match  - this will be used by the later function to decide what's best
+			self.search_matrix = self.search_matrix.loc[index]  # subset the search matrix to match  - this will be used by the later function to decide what's best
+
+		self.search_matrix = self.search_matrix.values  # set it back to a numpy array before exiting so that remaining logic works - probably a better way to handle this
 
 	def get_optimal_values(self, prior=0):
 		"""
@@ -467,6 +470,7 @@ class Stage(object):
 		#	max_selections = len(self.parent_dp._all_states)
 
 		#amount_remaining = max_selections - prior
+
 		self._filter_available_states()  # gives us self.search_matrix with available options
 
 		if self.search_matrix.any():
@@ -494,7 +498,7 @@ class Stage(object):
 			if self.decision_variable.related_state.current_state is None:
 				self.decision_variable.related_state.current_state = self.decision_amount
 			else:
-				self.decision_variable.related_state.current_state += self.decision_amount
+				self.decision_variable.related_state.current_state += self.decision_amount  # TODO: Does adding decision amount always work, or should this be flexible too?
 
 		if self.next_stage:
 			self.next_stage.get_optimal_values(prior=self.decision_amount + prior)

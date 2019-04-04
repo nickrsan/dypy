@@ -81,6 +81,12 @@ class AbstractVariable(object):
 		self._options = value
 		self._user_set_options = True
 
+	def __str__(self):
+		return str(self.name)
+
+	def __repr__(self):
+		return self.__str__()
+
 
 class StateVariable(AbstractVariable):
 	"""
@@ -129,6 +135,13 @@ class StateVariable(AbstractVariable):
 		elif six.PY2:
 			super(StateVariable, self).__init__(*args, **kwargs)
 
+	def reset_state(self):
+		"""
+			Resets the current state to the initial state - useful when running
+			multiple state variables with multiple paths
+		:return:
+		"""
+		self.current_state = self.initial_state
 
 class DecisionVariable(AbstractVariable):
 	"""
