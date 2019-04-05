@@ -99,6 +99,9 @@ class StateVariable(AbstractVariable):
 		:param availability_function: A numpy function indicating which states in the next stage are valid selections given
 						the value in the current stage plus decisions. Should be:
 						- numpy.equal (default) - only values that match the current state of this variable are available selections
+						- numpy.isclose - similar to equal, but important to use in most cases for floating point numbers where small changes in representation
+										as you accumulate more values in larger DPs can cause mysterious failures. Recommended to use for floating point state variables
+										where an equivalence test is needed.
 						- numpy.not_equal - only values *not* matching the current state are valid
 						- numpy.greater - only state values greater than the current state are available selections
 						- numpy.greater_equal - same as above, but greater than or equal
