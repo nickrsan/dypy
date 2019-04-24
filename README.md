@@ -1,6 +1,6 @@
 # DyPy: A general-purpose backward dynamic programming solver for Python
 
-DyPy is currently in early development. as of 4/2/2019, the code here is not ready for production use unless you are
+DyPy is currently in early development. As of 4/2/2019, the code here is not ready for production use unless you are
 willing to invest time in ensuring your solution is correct and that the solver is working correctly. Please be cautioned
 against using this solver. Your contributions to make this solver production-ready are welcome though, so please [get in touch](https://watershed.ucdavis.edu/user/64/contact)
 if you are interested.
